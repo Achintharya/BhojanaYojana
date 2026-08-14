@@ -115,3 +115,17 @@ export async function deletePantryItem(id: number): Promise<void> {
   const db = getDatabase();
   await db.runAsync('DELETE FROM pantry_items WHERE id = ?', [id]);
 }
+
+/**
+ * Get expired items
+ */
+export async function getExpiredItems(): Promise<PantryItem[]> {
+  const db = getDatabase();
+  return await db.getAllAsync<PantryItem>(
+    `SELECT * FROM pantry_items 
+     WHERE expiry_date IS NOT NULL 
+     AND date(expiry_date) < date('now')
+     ORDER BY expiry_date ASC`,
+    []
+  );
+}
