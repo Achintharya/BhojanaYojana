@@ -8,9 +8,9 @@ import { Platform } from 'react-native';
 export const typography = {
   // Font families
   fontFamily: Platform.select({
-    ios: 'Buntera-Demo',
-    android: 'Buntera-Demo',
-    default: 'Buntera-Demo',
+    ios: 'Puffberry-Demo',
+    android: 'Puffberry-Demo',
+    default: 'Puffberry-Demo',
   }),
   
   // Fallback font families

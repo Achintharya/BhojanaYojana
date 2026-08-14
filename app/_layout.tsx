@@ -15,7 +15,7 @@ export default function RootLayout() {
 
   // Load custom fonts
   const [fontsLoaded] = useFonts({
-    'Buntera-Demo': require('../assets/Buntera Demo.otf'),
+    'Puffberry-Demo': require('../assets/Puffberry-Demo.ttf'),
   });
 
   useEffect(() => {
