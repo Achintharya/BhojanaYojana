@@ -1,0 +1,49 @@
+feat: Initialize Bhojana Yojana foundation with Expo, TypeScript, and SQLite
+
+Initialize complete foundation for local-first meal planning app targeting
+Android tablets. Implements V1-ready database schema, type-safe data access
+layer, and navigation structure with Expo Router.
+
+Key Features:
+- Expo SDK 57 with React Native 0.86 and TypeScript strict mode
+- SQLite database with 8 tables covering all V1 requirements
+- Multilingual recipe support (English, Kannada, Marathi)
+- Type-safe data access layer for all modules
+- Tab navigation with 6 main screens (Home, Pantry, Grocery, Recipes, Meal Plan, Nutrition)
+- Database migration system for future updates
+
+Database Schema:
+- pantry_items: Inventory tracking with quantities, thresholds, expiry dates
+- recipes: Recipe metadata and nutrition information
+- recipe_content: Localized instructions and video support
+- recipe_ingredients: Junction table for recipe-pantry relationships
+- meal_plans: Scheduled meals with date and type
+- nutrition_targets: Daily nutritional goals
+- grocery_items: Smart shopping list with auto-generation tracking
+- preparation_tasks: Meal prep reminders (soaking, marinating, etc.)
+
+Data Access Layer:
+- Pantry: CRUD operations, low-stock detection, expiry tracking
+- Grocery: List management, purchase tracking, bulk operations
+- Recipes: Multilingual content, ingredients management
+- Meal Planning: Date-based queries, scheduling, completion tracking
+- Nutrition: Target setting and daily tracking
+- Preparation: Task management, reminder queries
+
+Architecture:
+- Clean separation: UI → Data Access → Database
+- Modular structure with feature-based organization
+- No unnecessary dependencies or dead code
+- Local-first with offline support
+- Tablet-optimized UI foundation
+
+Verified:
+- TypeScript compilation passes with no errors
+- Expo development server starts successfully
+- Database initializes correctly with migrations
+- Navigation works between all screens
+
+Project is production-ready for feature implementation in subsequent phases.
+No UI functionality implemented yet - this is intentional foundation-only work.
+
+Files: 20 created, ~1,446 lines of production code
