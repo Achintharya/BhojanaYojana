@@ -3,6 +3,7 @@
  */
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import colors from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 
@@ -19,23 +20,27 @@ export default function TabsLayout() {
           fontSize: typography.size.lg,
         },
         tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarInactiveTintColor: colors.secondary,
         tabBarStyle: {
+          position: 'absolute',
           backgroundColor: colors.primary,
           height: Platform.OS === 'android' ? 70 : 85,
           paddingBottom: Platform.OS === 'android' ? 10 : 20,
           paddingTop: 8,
           borderTopWidth: 0,
-          elevation: 8,
-          shadowColor: colors.shadow,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          marginHorizontal: 0,
+          elevation: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
         },
         tabBarLabelStyle: {
           fontSize: typography.size.xs,
           fontWeight: typography.weight.semibold,
-          marginTop: 4,
+          marginTop: 2,
         },
         tabBarIconStyle: {
           marginTop: 4,
@@ -47,6 +52,9 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarLabel: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -54,6 +62,9 @@ export default function TabsLayout() {
         options={{
           title: 'Pantry',
           tabBarLabel: 'Pantry',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="jar" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -61,6 +72,9 @@ export default function TabsLayout() {
         options={{
           title: 'Grocery List',
           tabBarLabel: 'Grocery',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cart" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -68,6 +82,9 @@ export default function TabsLayout() {
         options={{
           title: 'Recipes',
           tabBarLabel: 'Recipes',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -75,6 +92,9 @@ export default function TabsLayout() {
         options={{
           title: 'Meal Planner',
           tabBarLabel: 'Meals',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -82,6 +102,9 @@ export default function TabsLayout() {
         options={{
           title: 'Nutrition',
           tabBarLabel: 'Nutrition',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="pie-chart" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

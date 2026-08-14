@@ -158,6 +158,7 @@ export default function HomeScreen() {
             title="Plan Meals"
             onPress={() => router.push('/mealplan')}
             backgroundColor={colors.accent}
+            textColor={colors.textOnPrimary}
           />
           <View style={styles.actionSpacer} />
           <ActionCard
@@ -180,6 +181,7 @@ export default function HomeScreen() {
             title="Pantry"
             onPress={() => router.push('/pantry')}
             backgroundColor={colors.primary}
+            textColor={colors.secondary}
           />
           <View style={styles.actionSpacer} />
           <ActionCard

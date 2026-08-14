@@ -13,6 +13,8 @@ interface ActionCardProps {
   title: string;
   onPress: () => void;
   backgroundColor?: string;
+  textColor?: string;
+  iconColor?: string;
 }
 
 export default function ActionCard({ 
@@ -20,6 +22,8 @@ export default function ActionCard({
   title, 
   onPress,
   backgroundColor = colors.cardBackground,
+  textColor = colors.textPrimary,
+  iconColor,
 }: ActionCardProps) {
   return (
     <TouchableOpacity
@@ -28,9 +32,9 @@ export default function ActionCard({
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        <Text style={styles.icon}>{icon}</Text>
+        <Text style={[styles.icon, iconColor && { color: iconColor }]}>{icon}</Text>
       </View>
-      <Text style={styles.title} numberOfLines={2}>
+      <Text style={[styles.title, { color: textColor }]} numberOfLines={2}>
         {title}
       </Text>
     </TouchableOpacity>
