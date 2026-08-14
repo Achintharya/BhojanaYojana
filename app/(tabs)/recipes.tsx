@@ -7,7 +7,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
@@ -16,7 +15,12 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Recipe } from '../../src/database/types';
 import { getAllRecipes } from '../../src/modules/recipes/recipeData';
+import ScreenContainer from '../../src/components/common/ScreenContainer';
+import EmptyState from '../../src/components/common/EmptyState';
 import RecipeCard from '../../src/components/RecipeCard';
+import colors from '../../src/theme/colors';
+import spacing from '../../src/theme/spacing';
+import { textStyles, typography } from '../../src/theme/typography';
 
 export default function RecipesScreen() {
   const router = useRouter();
@@ -68,15 +72,7 @@ export default function RecipesScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Recipes</Text>
-        <Text style={styles.subtitle}>
-          Browse multilingual recipes with video tutorials
-        </Text>
-      </View>
-
-      {/* Search Bar */}
+      {/* Search Section */}
       <View style={styles.searchSection}>
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔍</Text>
@@ -85,89 +81,93 @@ export default function RecipesScreen() {
             placeholder="Search recipes..."
             value={searchQuery}
             onChangeText={handleSearch}
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textTertiary}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity
               onPress={() => handleSearch('')}
               style={styles.clearButton}
             >
-              <Text style={styles.clearButtonText}>✕</Text>
+              <Text style={styles.clearIcon}>✕</Text>
             </TouchableOpacity>
           )}
         </View>
+      </View>
 
-        {/* What's in my fridge button */}
+      {/* Content */}
+      <ScreenContainer scrollable={true} style={styles.contentContainer}>
+        {/* What's in my fridge card */}
         <TouchableOpacity
-          style={styles.fridgeButton}
+          style={styles.fridgeCard}
           onPress={handleWhatInMyFridge}
           activeOpacity={0.7}
         >
-          <Text style={styles.fridgeIcon}>🥬</Text>
-          <Text style={styles.fridgeButtonText}>What's in my fridge?</Text>
+          <View style={styles.fridgeContent}>
+            <View style={styles.fridgeLeft}>
+              <View style={styles.fridgeIconContainer}>
+                <Text style={styles.fridgeIcon}>🧊</Text>
+              </View>
+              <View style={styles.fridgeTextContainer}>
+                <Text style={styles.fridgeTitle}>What's in My Fridge?</Text>
+                <Text style={styles.fridgeSubtitle}>
+                  Cook something with what you already have
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.fridgeArrow}>→</Text>
+          </View>
         </TouchableOpacity>
-      </View>
 
-      {/* Recipe List */}
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        {/* Recipe List */}
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4CAF50" />
+            <ActivityIndicator size="large" color={colors.accent} />
             <Text style={styles.loadingText}>Loading recipes...</Text>
           </View>
         ) : filteredRecipes.length > 0 ? (
           <>
-            <View style={styles.resultsHeader}>
-              <Text style={styles.resultsText}>
-                {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''} found
-              </Text>
-              {searchQuery.length > 0 && (
-                <Text style={styles.searchingText}>
-                  searching for "{searchQuery}"
+            {searchQuery.length > 0 && (
+              <View style={styles.resultsHeader}>
+                <Text style={styles.resultsText}>
+                  {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''} found
                 </Text>
-              )}
+              </View>
+            )}
+            <View style={styles.recipesList}>
+              {filteredRecipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onPress={() => handleRecipePress(recipe.id)}
+                />
+              ))}
             </View>
-            {filteredRecipes.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                onPress={() => handleRecipePress(recipe.id)}
-              />
-            ))}
           </>
         ) : recipes.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📖</Text>
-            <Text style={styles.emptyTitle}>No Recipes Yet</Text>
-            <Text style={styles.emptyText}>
-              Add your first recipe to get started with meal planning
-            </Text>
-          </View>
+          <EmptyState
+            icon="📖"
+            title="No recipes yet"
+            message="Your cookbook will appear here once recipes are added"
+          />
         ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🔍</Text>
-            <Text style={styles.emptyTitle}>No Results</Text>
-            <Text style={styles.emptyText}>
-              No recipes found matching "{searchQuery}"
+          <EmptyState
+            icon="🔍"
+            title="No recipes found"
+            message={`No recipes matching "${searchQuery}"`}
+            actionLabel="Clear Search"
+            onAction={() => handleSearch('')}
+          />
+        )}
+
+        {/* Info Note */}
+        {recipes.length > 0 && (
+          <View style={styles.infoNote}>
+            <Text style={styles.infoNoteText}>
+              💡 All recipes available in English, ಕನ್ನಡ, and मराठी
             </Text>
-            <TouchableOpacity
-              style={styles.clearSearchButton}
-              onPress={() => handleSearch('')}
-            >
-              <Text style={styles.clearSearchButtonText}>Clear Search</Text>
-            </TouchableOpacity>
           </View>
         )}
-      </ScrollView>
-
-      {/* Info Banner */}
-      {recipes.length > 0 && (
-        <View style={styles.infoBanner}>
-          <Text style={styles.infoBannerText}>
-            💡 Tap any recipe to view details, ingredients, and instructions in English, ಕನ್ನಡ, or मराठी
-          </Text>
-        </View>
-      )}
+      </ScreenContainer>
     </View>
   );
 }
@@ -175,142 +175,120 @@ export default function RecipesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    backgroundColor: '#4CAF50',
-    padding: 20,
-    paddingTop: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#E8F5E9',
+    backgroundColor: colors.background,
   },
   searchSection: {
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: colors.cardBackground,
+    padding: spacing.base,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 12,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: spacing.radiusMedium,
+    paddingHorizontal: spacing.base,
+    minHeight: spacing.buttonHeight,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   searchIcon: {
-    fontSize: 18,
-    marginRight: 8,
+    fontSize: 20,
+    marginRight: spacing.sm,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    paddingVertical: 12,
-    color: '#333',
+    ...textStyles.body,
+    fontSize: typography.size.md,
+    color: colors.textPrimary,
+    paddingVertical: spacing.sm,
   },
   clearButton: {
-    padding: 8,
+    padding: spacing.sm,
   },
-  clearButtonText: {
-    fontSize: 18,
-    color: '#999',
-  },
-  fridgeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2196F3',
-    padding: 14,
-    borderRadius: 8,
-    gap: 8,
-  },
-  fridgeIcon: {
+  clearIcon: {
     fontSize: 20,
-  },
-  fridgeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  content: {
-    flex: 1,
+    color: colors.textTertiary,
   },
   contentContainer: {
-    padding: 16,
+    flex: 1,
+  },
+  fridgeCard: {
+    backgroundColor: colors.primary,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
+    marginBottom: spacing.sectionGap,
+  },
+  fridgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  fridgeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  fridgeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  fridgeIcon: {
+    fontSize: 24,
+  },
+  fridgeTextContainer: {
+    flex: 1,
+  },
+  fridgeTitle: {
+    ...textStyles.cardTitle,
+    color: colors.textOnPrimary,
+    marginBottom: spacing.xs,
+  },
+  fridgeSubtitle: {
+    ...textStyles.caption,
+    color: colors.secondary,
+  },
+  fridgeArrow: {
+    fontSize: 24,
+    color: colors.accent,
+    marginLeft: spacing.md,
   },
   loadingContainer: {
-    paddingVertical: 64,
+    paddingVertical: spacing.huge,
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
+    ...textStyles.body,
+    color: colors.textTertiary,
+    marginTop: spacing.base,
   },
   resultsHeader: {
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   resultsText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    ...textStyles.body,
+    fontWeight: typography.weight.semibold,
+    color: colors.textPrimary,
   },
-  searchingText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+  recipesList: {
+    gap: spacing.cardGap,
   },
-  emptyState: {
-    paddingVertical: 64,
+  infoNote: {
+    backgroundColor: colors.secondary,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.base,
+    marginTop: spacing.sectionGap,
     alignItems: 'center',
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#666',
+  infoNoteText: {
+    ...textStyles.caption,
+    color: colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 32,
-    lineHeight: 20,
-  },
-  clearSearchButton: {
-    marginTop: 16,
-    backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  clearSearchButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  infoBanner: {
-    backgroundColor: '#E8F5E9',
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#C8E6C9',
-  },
-  infoBannerText: {
-    fontSize: 12,
-    color: '#2E7D32',
-    textAlign: 'center',
-    lineHeight: 18,
   },
 });

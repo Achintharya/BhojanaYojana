@@ -6,6 +6,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { PantryItem } from '../database/types';
 import { isLowStock, getExpiryState, getExpiryColor, getExpiryLabel } from '../modules/pantry/pantryLogic';
+import colors from '../theme/colors';
+import spacing from '../theme/spacing';
+import { textStyles, typography } from '../theme/typography';
 
 interface PantryItemCardProps {
   item: PantryItem;
@@ -19,52 +22,61 @@ export default function PantryItemCard({ item, onEdit, onDelete }: PantryItemCar
   const expiryColor = getExpiryColor(expiryState);
   const expiryLabel = getExpiryLabel(expiryState, item.expiry_date);
 
+  const getStatusLabel = () => {
+    if (expiryState === 'expired' || expiryState === 'expiring_soon') {
+      return expiryLabel;
+    }
+    if (lowStock) {
+      return 'Low Stock';
+    }
+    return 'Good Stock';
+  };
+
+  const getStatusColor = () => {
+    if (expiryState === 'expired' || expiryState === 'expiring_soon') {
+      return expiryColor;
+    }
+    if (lowStock) {
+      return colors.lowStock;
+    }
+    return colors.goodStock;
+  };
+
   return (
     <View style={styles.card}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.name}>{item.name}</Text>
-          {lowStock && (
-            <View style={styles.lowStockBadge}>
-              <Text style={styles.lowStockText}>LOW STOCK</Text>
-            </View>
-          )}
-        </View>
+      <View style={styles.mainContent}>
+        {/* Item Name */}
+        <Text style={styles.name}>{item.name}</Text>
 
-        <View style={styles.details}>
-          <Text style={styles.quantity}>
-            {item.quantity} {item.unit}
+        {/* Quantity - Large and prominent */}
+        <Text style={styles.quantity}>
+          {item.quantity} {item.unit}
+        </Text>
+
+        {/* Status Badge */}
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '15' }]}>
+          <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
+          <Text style={[styles.statusText, { color: getStatusColor() }]}>
+            {getStatusLabel()}
           </Text>
-          {item.low_stock_threshold !== null && (
-            <Text style={styles.threshold}>
-              Min: {item.low_stock_threshold} {item.unit}
-            </Text>
-          )}
         </View>
-
-        {expiryLabel && (
-          <View style={[styles.expiryBadge, { backgroundColor: expiryColor + '20' }]}>
-            <Text style={[styles.expiryText, { color: expiryColor }]}>
-              {expiryLabel}
-            </Text>
-          </View>
-        )}
       </View>
 
+      {/* Action Buttons */}
       <View style={styles.actions}>
         <TouchableOpacity
-          style={styles.button}
+          style={styles.editButton}
           onPress={() => onEdit(item)}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Edit</Text>
+          <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, styles.deleteButton]}
+          style={styles.deleteButton}
           onPress={() => onDelete(item)}
           activeOpacity={0.7}
         >
-          <Text style={[styles.buttonText, styles.deleteButtonText]}>Delete</Text>
+          <Text style={styles.deleteButtonText}>Delete</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -73,94 +85,81 @@ export default function PantryItemCard({ item, onEdit, onDelete }: PantryItemCar
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: colors.cardBackground,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    elevation: 1,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  content: {
-    marginBottom: 12,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+  mainContent: {
+    marginBottom: spacing.base,
   },
   name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
-  },
-  lowStockBadge: {
-    backgroundColor: '#f44336',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  lowStockText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  details: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+    ...textStyles.cardTitle,
+    color: colors.primary,
+    marginBottom: spacing.sm,
   },
   quantity: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '600',
-    marginRight: 16,
+    fontSize: typography.size.xxl,
+    fontWeight: typography.weight.bold,
+    color: colors.accent,
+    marginBottom: spacing.md,
   },
-  threshold: {
-    fontSize: 14,
-    color: '#666',
-  },
-  expiryBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.radiusRound,
   },
-  expiryText: {
-    fontSize: 12,
-    fontWeight: '600',
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: spacing.sm,
+  },
+  statusText: {
+    ...textStyles.caption,
+    fontWeight: typography.weight.semibold,
   },
   actions: {
     flexDirection: 'row',
+    gap: spacing.sm,
   },
-  button: {
+  editButton: {
     flex: 1,
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    backgroundColor: colors.accent,
+    paddingVertical: spacing.md,
+    borderRadius: spacing.radiusSmall,
     alignItems: 'center',
-    minHeight: 48,
+    minHeight: spacing.minTouchTarget,
     justifyContent: 'center',
-    marginRight: 8,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  editButtonText: {
+    ...textStyles.button,
+    fontSize: typography.size.base,
+    color: colors.textOnAccent,
   },
   deleteButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#f44336',
-    marginRight: 0,
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: colors.error,
+    paddingVertical: spacing.md,
+    borderRadius: spacing.radiusSmall,
+    alignItems: 'center',
+    minHeight: spacing.minTouchTarget,
+    justifyContent: 'center',
   },
   deleteButtonText: {
-    color: '#f44336',
+    ...textStyles.button,
+    fontSize: typography.size.base,
+    color: colors.error,
   },
 });

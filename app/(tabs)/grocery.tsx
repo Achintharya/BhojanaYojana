@@ -3,7 +3,7 @@
  * View and manage shopping list
  */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { GroceryItem } from '../../src/database/types';
 import {
@@ -14,8 +14,16 @@ import {
   deleteGroceryItem,
   clearPurchasedItems,
 } from '../../src/modules/grocery/groceryData';
+import ScreenContainer from '../../src/components/common/ScreenContainer';
+import PrimaryButton from '../../src/components/common/PrimaryButton';
+import SecondaryButton from '../../src/components/common/SecondaryButton';
+import SectionHeader from '../../src/components/common/SectionHeader';
+import EmptyState from '../../src/components/common/EmptyState';
 import GroceryItemCard from '../../src/components/GroceryItemCard';
 import AddGroceryItemModal from '../../src/components/AddGroceryItemModal';
+import colors from '../../src/theme/colors';
+import spacing from '../../src/theme/spacing';
+import { textStyles, typography } from '../../src/theme/typography';
 
 export default function GroceryScreen() {
   const [autoItems, setAutoItems] = useState<GroceryItem[]>([]);
@@ -155,86 +163,108 @@ export default function GroceryScreen() {
   const filteredManualItems = filterItems(manualItems);
   const totalItems = filteredAutoItems.length + filteredManualItems.length;
 
+  const unpurchasedItems = [...filteredAutoItems, ...filteredManualItems].filter(i => i.is_purchased === 0);
+  const purchasedItems = [...autoItems, ...manualItems].filter(i => i.is_purchased === 1);
+  const hasPurchased = purchasedItems.length > 0;
+
   return (
     <View style={styles.container}>
+      {/* Header with Add Button */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.addButton}
+        <PrimaryButton
+          title="+ Add Item"
           onPress={handleAddManualItem}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.addButtonText}>+ Add Item</Text>
-        </TouchableOpacity>
+          large
+        />
       </View>
 
-      <View style={styles.controls}>
-        <TouchableOpacity
-          style={styles.toggleButton}
-          onPress={() => setShowPurchased(!showPurchased)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.toggleButtonText}>
-            {showPurchased ? 'Hide Purchased' : 'Show Purchased'}
-          </Text>
-        </TouchableOpacity>
-        {autoItems.some((i) => i.is_purchased === 1) || manualItems.some((i) => i.is_purchased === 1) ? (
-          <TouchableOpacity
-            style={styles.clearButton}
+      {/* Controls */}
+      {hasPurchased && (
+        <View style={styles.controls}>
+          <SecondaryButton
+            title="Clear Purchased"
             onPress={handleClearPurchased}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.clearButtonText}>Clear Purchased</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+            style={styles.clearButton}
+          />
+        </View>
+      )}
 
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+      {/* Items List */}
+      <ScreenContainer scrollable={true} style={styles.listContainer}>
         {loading ? (
-          <Text style={styles.emptyText}>Loading...</Text>
-        ) : totalItems === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No items in grocery list</Text>
-            <Text style={styles.emptySubtext}>
-              {showPurchased
-                ? 'Add items manually or they will be added automatically when pantry items are low'
-                : 'No unpurchased items'}
-            </Text>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading...</Text>
           </View>
+        ) : unpurchasedItems.length === 0 && purchasedItems.length === 0 ? (
+          <EmptyState
+            icon="🛒"
+            title="Nothing to buy right now"
+            message="Add items manually or they will be added automatically when pantry items are low"
+            actionLabel="Add Item"
+            onAction={handleAddManualItem}
+          />
         ) : (
           <>
-            {filteredAutoItems.length > 0 && (
+            {/* Need to Buy Section */}
+            {unpurchasedItems.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Automatically Needed</Text>
-                <Text style={styles.sectionSubtitle}>
-                  From low-stock pantry items
-                </Text>
-                {filteredAutoItems.map((item) => (
-                  <GroceryItemCard
-                    key={item.id}
-                    item={item}
-                    onTogglePurchased={handleTogglePurchased}
-                    onDelete={handleDeleteItem}
-                  />
-                ))}
+                <SectionHeader title="Need to Buy" />
+                <View style={styles.itemsList}>
+                  {unpurchasedItems.map((item) => (
+                    <GroceryItemCard
+                      key={item.id}
+                      item={item}
+                      onTogglePurchased={handleTogglePurchased}
+                      onDelete={handleDeleteItem}
+                    />
+                  ))}
+                </View>
               </View>
             )}
 
-            {filteredManualItems.length > 0 && (
+            {/* Purchased Section */}
+            {showPurchased && purchasedItems.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Manually Added</Text>
-                {filteredManualItems.map((item) => (
-                  <GroceryItemCard
-                    key={item.id}
-                    item={item}
-                    onTogglePurchased={handleTogglePurchased}
-                    onDelete={handleDeleteItem}
-                  />
-                ))}
+                <SectionHeader 
+                  title="Purchased" 
+                  actionLabel={showPurchased ? 'Hide' : 'Show'}
+                  onActionPress={() => setShowPurchased(!showPurchased)}
+                />
+                <View style={styles.itemsList}>
+                  {purchasedItems.map((item) => (
+                    <GroceryItemCard
+                      key={item.id}
+                      item={item}
+                      onTogglePurchased={handleTogglePurchased}
+                      onDelete={handleDeleteItem}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Show Purchased Button if hidden */}
+            {!showPurchased && purchasedItems.length > 0 && (
+              <TouchableOpacity
+                style={styles.showPurchasedButton}
+                onPress={() => setShowPurchased(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.showPurchasedText}>
+                  Show {purchasedItems.length} purchased item{purchasedItems.length !== 1 ? 's' : ''}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {unpurchasedItems.length === 0 && purchasedItems.length > 0 && (
+              <View style={styles.allDoneMessage}>
+                <Text style={styles.allDoneIcon}>✓</Text>
+                <Text style={styles.allDoneText}>All items purchased!</Text>
               </View>
             )}
           </>
         )}
-      </ScrollView>
+      </ScreenContainer>
 
       <AddGroceryItemModal
         visible={modalVisible}
@@ -248,102 +278,62 @@ export default function GroceryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: spacing.base,
+    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  addButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    borderBottomColor: colors.border,
   },
   controls: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 8,
-    backgroundColor: '#fff',
+    padding: spacing.base,
+    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  toggleButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+    borderBottomColor: colors.border,
   },
   clearButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#f44336',
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
+    borderColor: colors.error,
   },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#f44336',
-  },
-  list: {
+  listContainer: {
     flex: 1,
   },
-  listContent: {
-    padding: 16,
+  loadingContainer: {
+    paddingVertical: spacing.huge,
+    alignItems: 'center',
+  },
+  loadingText: {
+    ...textStyles.body,
+    color: colors.textTertiary,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: spacing.sectionGap,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+  itemsList: {
+    gap: spacing.cardGap,
   },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  emptyContainer: {
+  showPurchasedButton: {
+    backgroundColor: colors.surfaceLight,
+    padding: spacing.base,
+    borderRadius: spacing.radiusMedium,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
+    marginTop: spacing.md,
   },
-  emptyText: {
-    fontSize: 18,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 8,
+  showPurchasedText: {
+    ...textStyles.body,
+    color: colors.accent,
+    fontWeight: typography.weight.semibold,
   },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#bbb',
-    textAlign: 'center',
-    paddingHorizontal: 32,
+  allDoneMessage: {
+    alignItems: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  allDoneIcon: {
+    fontSize: 48,
+    marginBottom: spacing.md,
+  },
+  allDoneText: {
+    ...textStyles.cardTitle,
+    color: colors.goodStock,
   },
 });

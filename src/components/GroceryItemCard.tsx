@@ -5,6 +5,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { GroceryItem } from '../database/types';
+import colors from '../theme/colors';
+import spacing from '../theme/spacing';
+import { textStyles, typography } from '../theme/typography';
 
 interface GroceryItemCardProps {
   item: GroceryItem;
@@ -17,34 +20,41 @@ export default function GroceryItemCard({ item, onTogglePurchased, onDelete }: G
 
   return (
     <View style={[styles.card, isPurchased && styles.purchasedCard]}>
+      {/* Large Checkbox */}
       <TouchableOpacity
-        style={styles.checkbox}
+        style={styles.checkboxTouchArea}
         onPress={() => onTogglePurchased(item)}
         activeOpacity={0.7}
       >
-        <View style={[styles.checkboxBox, isPurchased && styles.checkboxChecked]}>
+        <View style={[styles.checkbox, isPurchased && styles.checkboxChecked]}>
           {isPurchased && <Text style={styles.checkmark}>✓</Text>}
         </View>
       </TouchableOpacity>
 
+      {/* Content */}
       <View style={styles.content}>
-        <Text style={[styles.name, isPurchased && styles.purchasedText]}>
+        <Text style={[styles.name, isPurchased && styles.nameStrikethrough]}>
           {item.name}
         </Text>
-        <Text style={[styles.quantity, isPurchased && styles.purchasedText]}>
-          {item.quantity} {item.unit}
-        </Text>
-        {item.auto_generated === 1 && (
-          <Text style={styles.autoLabel}>Auto-added</Text>
-        )}
+        <View style={styles.details}>
+          <Text style={[styles.quantity, isPurchased && styles.quantityStrikethrough]}>
+            {item.quantity} {item.unit}
+          </Text>
+          {item.auto_generated === 1 && !isPurchased && (
+            <View style={styles.autoBadge}>
+              <Text style={styles.autoLabel}>Auto</Text>
+            </View>
+          )}
+        </View>
       </View>
 
+      {/* Delete Button */}
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => onDelete(item)}
         activeOpacity={0.7}
       >
-        <Text style={styles.deleteText}>×</Text>
+        <Text style={styles.deleteIcon}>×</Text>
       </TouchableOpacity>
     </View>
   );
@@ -52,76 +62,90 @@ export default function GroceryItemCard({ item, onTogglePurchased, onDelete }: G
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: colors.cardBackground,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.base,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    minHeight: 72,
   },
   purchasedCard: {
-    backgroundColor: '#f5f5f5',
-    opacity: 0.7,
+    backgroundColor: colors.surfaceLight,
+    opacity: 0.6,
+  },
+  checkboxTouchArea: {
+    padding: spacing.sm,
+    marginRight: spacing.sm,
   },
   checkbox: {
-    marginRight: 12,
-  },
-  checkboxBox: {
-    width: 32,
-    height: 32,
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-    borderRadius: 6,
+    width: 40,
+    height: 40,
+    borderWidth: 3,
+    borderColor: colors.accent,
+    borderRadius: spacing.radiusSmall,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   checkmark: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    color: colors.textOnAccent,
+    fontSize: 24,
+    fontWeight: typography.weight.bold,
   },
   content: {
     flex: 1,
+    justifyContent: 'center',
   },
   name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    ...textStyles.body,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  nameStrikethrough: {
+    textDecorationLine: 'line-through',
+    color: colors.textTertiary,
+  },
+  details: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   quantity: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
+    ...textStyles.caption,
+    color: colors.textSecondary,
+    marginRight: spacing.sm,
+  },
+  quantityStrikethrough: {
+    textDecorationLine: 'line-through',
+    color: colors.textTertiary,
+  },
+  autoBadge: {
+    backgroundColor: colors.accentLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: spacing.radiusSmall,
   },
   autoLabel: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontStyle: 'italic',
-  },
-  purchasedText: {
-    textDecorationLine: 'line-through',
-    color: '#999',
+    fontSize: typography.size.xs,
+    color: colors.accent,
+    fontWeight: typography.weight.semibold,
   },
   deleteButton: {
-    width: 40,
-    height: 40,
+    width: spacing.minTouchTarget,
+    height: spacing.minTouchTarget,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+    marginLeft: spacing.xs,
   },
-  deleteText: {
+  deleteIcon: {
     fontSize: 32,
-    color: '#999',
+    color: colors.textTertiary,
     fontWeight: '300',
   },
 });

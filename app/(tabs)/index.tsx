@@ -3,17 +3,29 @@
  * Overview of pantry, upcoming meals, and prep tasks
  */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { PreparationTask } from '../../src/database/types';
+import { PreparationTask, MealPlan } from '../../src/database/types';
 import { getUpcomingTasks, updatePreparationTask } from '../../src/modules/preparation/preparationData';
-import TomorrowPrepCard from '../../src/components/TomorrowPrepCard';
+import { getLowStockItems } from '../../src/modules/pantry/pantryData';
+import { getUnpurchasedItems } from '../../src/modules/grocery/groceryData';
+import { getMealPlansWithRecipes } from '../../src/modules/mealPlanning/mealPlanData';
 import { requestNotificationPermissions, hasNotificationPermissions } from '../../src/modules/preparation/notificationManager';
 import { supportsNativeNotifications, isWeb } from '../../src/utils/platform';
+import ScreenContainer from '../../src/components/common/ScreenContainer';
+import SectionHeader from '../../src/components/common/SectionHeader';
+import ActionCard from '../../src/components/common/ActionCard';
+import StatusCard from '../../src/components/common/StatusCard';
+import colors from '../../src/theme/colors';
+import spacing from '../../src/theme/spacing';
+import { textStyles, typography } from '../../src/theme/typography';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [upcomingTasks, setUpcomingTasks] = useState<PreparationTask[]>([]);
+  const [lowStockCount, setLowStockCount] = useState(0);
+  const [groceryCount, setGroceryCount] = useState(0);
+  const [todayMeals, setTodayMeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
@@ -27,6 +39,20 @@ export default function HomeScreen() {
       // Check notification permissions
       const hasPerms = await hasNotificationPermissions();
       setNotificationsEnabled(hasPerms);
+
+      // Load low stock items count
+      const lowStockItems = await getLowStockItems();
+      setLowStockCount(lowStockItems.length);
+
+      // Load grocery items count
+      const unpurchasedItems = await getUnpurchasedItems();
+      setGroceryCount(unpurchasedItems.length);
+
+      // Load today's meals
+      const today = new Date().toISOString().split('T')[0];
+      const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+      const meals = await getMealPlansWithRecipes(today, tomorrow);
+      setTodayMeals(meals.filter(m => m.planned_date === today));
     } catch (error) {
       console.error('Error loading home screen data:', error);
     } finally {
@@ -40,215 +66,480 @@ export default function HomeScreen() {
     }, [])
   );
 
-  const handleCompleteTask = async (taskId: number) => {
-    try {
-      await updatePreparationTask(taskId, { is_completed: 1 });
-      Alert.alert('Success', 'Task marked as completed!', [{ text: 'OK' }]);
-      loadData();
-    } catch (error) {
-      console.error('Error completing task:', error);
-      Alert.alert('Error', 'Failed to complete task');
-    }
+  const getMealTypeLabel = (mealType: string) => {
+    const labels: Record<string, string> = {
+      breakfast: 'Breakfast',
+      lunch: 'Lunch',
+      dinner: 'Dinner',
+    };
+    return labels[mealType] || mealType;
   };
 
-  const handleEnableNotifications = async () => {
-    if (!supportsNativeNotifications) {
-      Alert.alert(
-        'Web Platform',
-        'Native notifications are not supported on Web. Preparation tasks will remain visible in the app. Use the Android app for notification reminders.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    const granted = await requestNotificationPermissions();
-    if (granted) {
-      setNotificationsEnabled(true);
-      Alert.alert('Success', 'Notifications enabled! You will receive meal prep reminders.', [
-        { text: 'OK' },
-      ]);
-    } else {
-      Alert.alert(
-        'Permissions Denied',
-        'Please enable notifications in your device settings to receive meal prep reminders.',
-        [{ text: 'OK' }]
-      );
-    }
+  const getMealTypeIcon = (mealType: string) => {
+    const icons: Record<string, string> = {
+      breakfast: '☀️',
+      lunch: '☀️',
+      dinner: '🌙',
+    };
+    return icons[mealType] || '🍽️';
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Bhojana Yojana</Text>
-        <Text style={styles.subtitle}>Your household meal planning companion</Text>
+    <ScreenContainer>
+      {/* Greeting */}
+      <View style={styles.greeting}>
+        <Text style={styles.greetingText}>Namaste! 👋</Text>
+        <Text style={styles.subtitle}>Let's plan delicious meals for your family</Text>
+      </View>
 
-        {/* Notification Permission Banner */}
-        {!notificationsEnabled && (
-          <TouchableOpacity
-            style={styles.notificationBanner}
-            onPress={handleEnableNotifications}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.notificationBannerIcon}>🔔</Text>
-            <View style={styles.notificationBannerContent}>
-              <Text style={styles.notificationBannerTitle}>
-                {isWeb ? 'Notifications (Web)' : 'Enable Notifications'}
-              </Text>
-              <Text style={styles.notificationBannerText}>
-                {isWeb
-                  ? 'Native notifications not supported on Web. Prep tasks remain visible. Use Android app for reminders.'
-                  : 'Get reminders for meal preparation tasks'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
+      {/* Web Notification Banner */}
+      {isWeb && (
+        <TouchableOpacity style={styles.webNotificationBanner} activeOpacity={0.9}>
+          <View style={styles.notificationIcon}>
+            <Text style={styles.notificationIconText}>🔔</Text>
+          </View>
+          <View style={styles.notificationContent}>
+            <Text style={styles.notificationTitle}>Reminders on Web</Text>
+            <Text style={styles.notificationMessage}>
+              Native notifications are not supported on Web. Prep tasks remain visible here. Use Android app for reminders.
+            </Text>
+          </View>
+          <Text style={styles.notificationArrow}>›</Text>
+        </TouchableOpacity>
+      )}
 
-        {/* Tomorrow's Prep Card */}
+      {/* Tomorrow's Prep */}
+      <View style={styles.prepSection}>
+        <SectionHeader title="Tomorrow's Prep" />
         {loading ? (
-          <View style={styles.section}>
+          <View style={styles.prepCard}>
             <Text style={styles.loadingText}>Loading...</Text>
           </View>
+        ) : upcomingTasks.length === 0 ? (
+          <View style={styles.prepCard}>
+            <View style={styles.prepEmpty}>
+              <View style={styles.prepEmptyIcon}>
+                <Text style={styles.prepEmptyIconText}>😊</Text>
+              </View>
+              <View style={styles.prepEmptyContent}>
+                <Text style={styles.prepEmptyTitle}>No preparation tasks</Text>
+                <Text style={styles.prepEmptyMessage}>Enjoy your day!</Text>
+              </View>
+            </View>
+          </View>
         ) : (
-          <TomorrowPrepCard
-            tasks={upcomingTasks}
-            onCompleteTask={handleCompleteTask}
-            onTaskPress={(task) => {
-              // Navigate to meal planner to see the related meal
-              router.push('/mealplan');
-            }}
-          />
+          <View style={styles.prepCard}>
+            {upcomingTasks.slice(0, 3).map((task) => (
+              <TouchableOpacity
+                key={task.id}
+                style={styles.prepTask}
+                onPress={() => router.push('/mealplan')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.prepTaskText}>{task.description}</Text>
+                <Text style={styles.prepTaskTime}>
+                  {new Date(task.reminder_time).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
+      </View>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+      {/* Quick Actions */}
+      <View style={styles.quickActions}>
+        <SectionHeader title="Quick Actions" />
+        <View style={styles.actionsRow}>
+          <ActionCard
+            icon="📅"
+            title="Plan Meals"
+            onPress={() => router.push('/mealplan')}
+            backgroundColor={colors.accent}
+          />
+          <View style={styles.actionSpacer} />
+          <ActionCard
+            icon="📖"
+            title="Browse Recipes"
+            onPress={() => router.push('/recipes')}
+            backgroundColor={colors.secondary}
+          />
+        </View>
+        <View style={styles.actionsRow}>
+          <ActionCard
+            icon="🛒"
+            title="Grocery List"
+            onPress={() => router.push('/grocery')}
+            backgroundColor={colors.surfaceLight}
+          />
+          <View style={styles.actionSpacer} />
+          <ActionCard
+            icon="🏺"
+            title="Pantry"
+            onPress={() => router.push('/pantry')}
+            backgroundColor={colors.primary}
+          />
+          <View style={styles.actionSpacer} />
+          <ActionCard
+            icon="📊"
+            title="Nutrition"
+            onPress={() => router.push('/nutrition')}
+            backgroundColor={colors.secondary}
+          />
+        </View>
+      </View>
+
+      {/* Status Cards */}
+      <View style={styles.statusSection}>
+        <View style={styles.statusRow}>
+          <View style={styles.statusCardWrapper}>
+            <StatusCard
+              icon="🏺"
+              title="Pantry Status"
+              count={lowStockCount}
+              subtitle="Low Stock Items"
+              onPress={() => router.push('/pantry')}
+              accentColor={colors.accent}
+            />
+          </View>
+          <View style={styles.statusSpacer} />
+          <View style={styles.statusCardWrapper}>
+            <StatusCard
+              icon="🛒"
+              title="Grocery List"
+              count={groceryCount}
+              subtitle="Items to Buy"
+              onPress={() => router.push('/grocery')}
+              accentColor={colors.accent}
+            />
+          </View>
+        </View>
+
+        <View style={styles.todayMealsCard}>
+          <View style={styles.todayMealsHeader}>
+            <Text style={styles.todayMealsIcon}>📅</Text>
+            <Text style={styles.todayMealsTitle}>Today's Meals</Text>
+          </View>
+          {todayMeals.length === 0 ? (
+            <Text style={styles.todayMealsEmpty}>No meals planned</Text>
+          ) : (
+            <View style={styles.mealsList}>
+              {['breakfast', 'lunch', 'dinner'].map((mealType) => {
+                const meal = todayMeals.find((m) => m.meal_type === mealType);
+                return (
+                  <View key={mealType} style={styles.mealRow}>
+                    <Text style={styles.mealIcon}>{getMealTypeIcon(mealType)}</Text>
+                    <Text style={styles.mealType}>{getMealTypeLabel(mealType)}</Text>
+                    <Text style={styles.mealValue}>{meal?.name || '--'}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
           <TouchableOpacity
-            style={styles.actionButton}
+            style={styles.planMealsButton}
             onPress={() => router.push('/mealplan')}
             activeOpacity={0.7}
           >
-            <Text style={styles.actionButtonIcon}>📅</Text>
-            <Text style={styles.actionButtonText}>Plan Your Meals</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/recipes')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.actionButtonIcon}>📖</Text>
-            <Text style={styles.actionButtonText}>Browse Recipes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/grocery')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.actionButtonIcon}>🛒</Text>
-            <Text style={styles.actionButtonText}>Grocery List</Text>
+            <Text style={styles.planMealsButtonText}>Plan Meals →</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+
+      {/* What's in My Fridge */}
+      <TouchableOpacity
+        style={styles.fridgeCard}
+        onPress={() => router.push('/fridge-recipes')}
+        activeOpacity={0.7}
+      >
+        <View style={styles.fridgeContent}>
+          <View style={styles.fridgeLeft}>
+            <View style={styles.fridgeIconContainer}>
+              <Text style={styles.fridgeIcon}>🧊</Text>
+            </View>
+            <View>
+              <Text style={styles.fridgeTitle}>What's in My Fridge?</Text>
+              <Text style={styles.fridgeMessage}>See recipes you can make with what you have</Text>
+            </View>
+          </View>
+          <View style={styles.fridgeRight}>
+            <Text style={styles.fridgeVegetables}>🍅🧄🫑</Text>
+          </View>
+        </View>
+        <View style={styles.fridgeButton}>
+          <Text style={styles.fridgeButtonText}>Find Recipes →</Text>
+        </View>
+      </TouchableOpacity>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+  // Greeting
+  greeting: {
+    marginBottom: spacing.sectionGap,
   },
-  content: {
-    padding: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+  greetingText: {
+    ...textStyles.screenTitle,
+    color: colors.primary,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
+    ...textStyles.bodyLarge,
+    color: colors.textSecondary,
   },
-  section: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  bulletPoint: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
-    marginVertical: 4,
-  },
-  loadingText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#999',
-    paddingVertical: 24,
-  },
-  notificationBanner: {
-    backgroundColor: '#FFF3E0',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
+  
+  // Web notification banner
+  webNotificationBanner: {
+    backgroundColor: colors.secondary,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.base,
+    marginBottom: spacing.sectionGap,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FFB74D',
+    borderColor: colors.border,
   },
-  notificationBannerIcon: {
-    fontSize: 32,
-    marginRight: 12,
+  notificationIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
   },
-  notificationBannerContent: {
+  notificationIconText: {
+    fontSize: 24,
+  },
+  notificationContent: {
     flex: 1,
   },
-  notificationBannerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#E65100',
-    marginBottom: 4,
+  notificationTitle: {
+    ...textStyles.body,
+    fontWeight: typography.weight.semibold,
+    color: colors.primary,
+    marginBottom: spacing.xs,
   },
-  notificationBannerText: {
-    fontSize: 14,
-    color: '#F57C00',
+  notificationMessage: {
+    ...textStyles.caption,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
-  actionButton: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 16,
+  notificationArrow: {
+    fontSize: 24,
+    color: colors.textTertiary,
+    marginLeft: spacing.sm,
+  },
+  
+  // Tomorrow's Prep
+  prepSection: {
+    marginBottom: spacing.sectionGap,
+  },
+  prepCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPadding,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  prepEmpty: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingVertical: spacing.md,
+  },
+  prepEmptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  prepEmptyIconText: {
+    fontSize: 32,
+  },
+  prepEmptyContent: {
+    flex: 1,
+  },
+  prepEmptyTitle: {
+    ...textStyles.cardTitle,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  prepEmptyMessage: {
+    ...textStyles.body,
+    color: colors.textSecondary,
+  },
+  prepTask: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  prepTaskText: {
+    ...textStyles.body,
+    color: colors.textPrimary,
+    flex: 1,
+    marginRight: spacing.md,
+  },
+  prepTaskTime: {
+    ...textStyles.caption,
+    color: colors.accent,
+    fontWeight: typography.weight.semibold,
+  },
+  loadingText: {
+    ...textStyles.body,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
+  },
+  
+  // Quick Actions
+  quickActions: {
+    marginBottom: spacing.sectionGap,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.cardGap,
+  },
+  actionSpacer: {
+    width: spacing.cardGap,
+  },
+  
+  // Status Section
+  statusSection: {
+    marginBottom: spacing.sectionGap,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.cardGapLarge,
+  },
+  statusCardWrapper: {
+    flex: 1,
+  },
+  statusSpacer: {
+    width: spacing.cardGapLarge,
+  },
+  todayMealsCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: colors.borderLight,
   },
-  actionButtonIcon: {
+  todayMealsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.base,
+  },
+  todayMealsIcon: {
     fontSize: 24,
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+  todayMealsTitle: {
+    ...textStyles.cardTitle,
+    color: colors.primary,
+  },
+  todayMealsEmpty: {
+    ...textStyles.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
+  },
+  mealsList: {
+    marginBottom: spacing.base,
+  },
+  mealRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  mealIcon: {
+    fontSize: 18,
+    marginRight: spacing.sm,
+  },
+  mealType: {
+    ...textStyles.body,
+    color: colors.textPrimary,
+    width: 80,
+  },
+  mealValue: {
+    ...textStyles.body,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  planMealsButton: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: spacing.radiusSmall,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  planMealsButtonText: {
+    ...textStyles.body,
+    color: colors.accent,
+    fontWeight: typography.weight.semibold,
+  },
+  
+  // What's in My Fridge
+  fridgeCard: {
+    backgroundColor: colors.primary,
+    borderRadius: spacing.radiusLarge,
+    padding: spacing.cardPaddingLarge,
+    marginBottom: spacing.lg,
+  },
+  fridgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.base,
+  },
+  fridgeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  fridgeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  fridgeIcon: {
+    fontSize: 24,
+  },
+  fridgeTitle: {
+    ...textStyles.cardTitle,
+    color: colors.textOnPrimary,
+    marginBottom: spacing.xs,
+  },
+  fridgeMessage: {
+    ...textStyles.caption,
+    color: colors.secondary,
+  },
+  fridgeRight: {
+    marginLeft: spacing.md,
+  },
+  fridgeVegetables: {
+    fontSize: 32,
+  },
+  fridgeButton: {
+    backgroundColor: colors.accent,
+    borderRadius: spacing.radiusMedium,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  fridgeButtonText: {
+    ...textStyles.button,
+    color: colors.textOnAccent,
   },
 });

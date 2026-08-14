@@ -3,7 +3,7 @@
  * View and manage pantry inventory
  */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { PantryItem } from '../../src/database/types';
 import {
@@ -16,8 +16,14 @@ import {
 } from '../../src/modules/pantry/pantryData';
 import { getGroceryItemByPantryId } from '../../src/modules/grocery/groceryData';
 import { syncPantryToGrocery } from '../../src/modules/pantry/pantryLogic';
+import ScreenContainer from '../../src/components/common/ScreenContainer';
+import PrimaryButton from '../../src/components/common/PrimaryButton';
+import EmptyState from '../../src/components/common/EmptyState';
 import PantryItemCard from '../../src/components/PantryItemCard';
 import AddPantryItemModal from '../../src/components/AddPantryItemModal';
+import colors from '../../src/theme/colors';
+import spacing from '../../src/theme/spacing';
+import { textStyles, typography } from '../../src/theme/typography';
 
 type FilterType = 'all' | 'low_stock' | 'expiring';
 
@@ -146,19 +152,19 @@ export default function PantryScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header with Add Button */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.addButton}
+        <PrimaryButton
+          title="+ Add Item"
           onPress={handleAddItem}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.addButtonText}>+ Add Item</Text>
-        </TouchableOpacity>
+          large
+        />
       </View>
 
+      {/* Filter Pills */}
       <View style={styles.filters}>
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]}
+          style={[styles.filterPill, filter === 'all' && styles.filterPillActive]}
           onPress={() => setFilter('all')}
           activeOpacity={0.7}
         >
@@ -167,7 +173,7 @@ export default function PantryScreen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'low_stock' && styles.filterButtonActive]}
+          style={[styles.filterPill, filter === 'low_stock' && styles.filterPillActive]}
           onPress={() => setFilter('low_stock')}
           activeOpacity={0.7}
         >
@@ -176,7 +182,7 @@ export default function PantryScreen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'expiring' && styles.filterButtonActive]}
+          style={[styles.filterPill, filter === 'expiring' && styles.filterPillActive]}
           onPress={() => setFilter('expiring')}
           activeOpacity={0.7}
         >
@@ -186,22 +192,28 @@ export default function PantryScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+      {/* Items List */}
+      <ScreenContainer scrollable={true} style={styles.listContainer}>
         {loading ? (
-          <Text style={styles.emptyText}>Loading...</Text>
-        ) : items.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No items found</Text>
-            <Text style={styles.emptySubtext}>
-              {filter === 'all'
-                ? 'Add your first pantry item to get started'
-                : filter === 'low_stock'
-                ? 'No items are currently low on stock'
-                : 'No items expiring in the next 7 days'}
-            </Text>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading...</Text>
           </View>
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon="🏺"
+            title={filter === 'all' ? 'Your pantry is empty' : filter === 'low_stock' ? 'No low stock items' : 'Nothing expiring soon'}
+            message={
+              filter === 'all'
+                ? 'Add the food you have at home'
+                : filter === 'low_stock'
+                ? 'All items have good stock levels'
+                : 'No items expiring in the next 7 days'
+            }
+            actionLabel={filter === 'all' ? 'Add Item' : undefined}
+            onAction={filter === 'all' ? handleAddItem : undefined}
+          />
         ) : (
-          <View>
+          <View style={styles.itemsList}>
             {items.map((item) => (
               <PantryItemCard
                 key={item.id}
@@ -212,7 +224,7 @@ export default function PantryScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
+      </ScreenContainer>
 
       <AddPantryItemModal
         visible={modalVisible}
@@ -227,77 +239,57 @@ export default function PantryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
-    padding: 16,
-    backgroundColor: '#fff',
+    padding: spacing.base,
+    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  addButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    borderBottomColor: colors.border,
   },
   filters: {
     flexDirection: 'row',
-    padding: 16,
-    gap: 8,
-    backgroundColor: '#fff',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
+    gap: spacing.sm,
   },
-  filterButton: {
+  filterPill: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.base,
+    borderRadius: spacing.radiusRound,
+    backgroundColor: colors.surfaceLight,
     alignItems: 'center',
-    minHeight: 44,
     justifyContent: 'center',
+    minHeight: spacing.minTouchTarget,
   },
-  filterButtonActive: {
-    backgroundColor: '#4CAF50',
+  filterPillActive: {
+    backgroundColor: colors.accent,
   },
   filterText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+    ...textStyles.body,
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold,
+    color: colors.textSecondary,
   },
   filterTextActive: {
-    color: '#fff',
+    color: colors.textOnAccent,
   },
-  list: {
+  listContainer: {
     flex: 1,
   },
-  listContent: {
-    padding: 16,
-  },
-  emptyContainer: {
+  loadingContainer: {
+    paddingVertical: spacing.huge,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
   },
-  emptyText: {
-    fontSize: 18,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 8,
+  loadingText: {
+    ...textStyles.body,
+    color: colors.textTertiary,
   },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#bbb',
-    textAlign: 'center',
+  itemsList: {
+    gap: spacing.cardGap,
   },
 });
