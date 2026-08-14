@@ -176,18 +176,18 @@ export default function HomeScreen() {
             iconName="calendar"
             title="Plan Meals"
             onPress={() => router.push('/mealplan')}
-            backgroundColor={colors.accent}
-            textColor={colors.textOnPrimary}
-            iconColor={colors.textOnPrimary}
+            backgroundColor="#FF8A3D"
+            textColor="#FFFFFF"
+            iconColor="#FFFFFF"
           />
           <View style={styles.actionSpacer} />
           <ActionCard
             iconName="book"
             title="Browse Recipes"
             onPress={() => router.push('/recipes')}
-            backgroundColor={colors.secondary}
-            textColor={colors.textPrimary}
-            iconColor={colors.textPrimary}
+            backgroundColor="#F5E6D3"
+            textColor="#3D2817"
+            iconColor="#3D2817"
           />
         </View>
         <View style={styles.actionsRow}>
@@ -195,27 +195,27 @@ export default function HomeScreen() {
             iconName="cart"
             title="Grocery List"
             onPress={() => router.push('/grocery')}
-            backgroundColor={colors.surfaceLight}
-            textColor={colors.textPrimary}
-            iconColor={colors.textPrimary}
+            backgroundColor="#F5E6D3"
+            textColor="#3D2817"
+            iconColor="#3D2817"
           />
           <View style={styles.actionSpacer} />
           <ActionCard
             iconName="archive"
             title="Pantry"
             onPress={() => router.push('/pantry')}
-            backgroundColor={colors.primary}
-            textColor={colors.secondary}
-            iconColor={colors.secondary}
+            backgroundColor="#3D2817"
+            textColor="#FFB86F"
+            iconColor="#FFB86F"
           />
           <View style={styles.actionSpacer} />
           <ActionCard
             iconName="pie-chart"
             title="Nutrition"
             onPress={() => router.push('/nutrition')}
-            backgroundColor={colors.secondary}
-            textColor={colors.textPrimary}
-            iconColor={colors.textPrimary}
+            backgroundColor="#F5E6D3"
+            textColor="#3D2817"
+            iconColor="#3D2817"
           />
         </View>
       </View>
