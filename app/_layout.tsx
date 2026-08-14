@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { initializeDatabase } from '../src/database/db';
+import { seedSampleData } from '../src/database/seedData';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -16,6 +17,10 @@ export default function RootLayout() {
       try {
         // Initialize the database
         await initializeDatabase();
+        
+        // Seed sample data (only runs once)
+        await seedSampleData();
+        
         setIsReady(true);
       } catch (e) {
         console.error('Failed to initialize app:', e);

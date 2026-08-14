@@ -133,3 +133,22 @@ export async function getManualItems(): Promise<GroceryItem[]> {
     'SELECT * FROM grocery_items WHERE auto_generated = 0 ORDER BY name ASC'
   );
 }
+
+/**
+ * Get grocery items by source
+ */
+export async function getGroceryItemsBySource(source: string): Promise<GroceryItem[]> {
+  const db = getDatabase();
+  return await db.getAllAsync<GroceryItem>(
+    'SELECT * FROM grocery_items WHERE source = ? ORDER BY name ASC',
+    [source]
+  );
+}
+
+/**
+ * Delete grocery items by source
+ */
+export async function deleteGroceryItemsBySource(source: string): Promise<void> {
+  const db = getDatabase();
+  await db.runAsync('DELETE FROM grocery_items WHERE source = ?', [source]);
+}
