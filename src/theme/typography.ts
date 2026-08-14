@@ -8,6 +8,13 @@ import { Platform } from 'react-native';
 export const typography = {
   // Font families
   fontFamily: Platform.select({
+    ios: 'Buntera-Demo',
+    android: 'Buntera-Demo',
+    default: 'Buntera-Demo',
+  }),
+  
+  // Fallback font families
+  fallbackFontFamily: Platform.select({
     ios: 'System',
     android: 'Roboto',
     default: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',

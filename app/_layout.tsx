@@ -5,12 +5,18 @@
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { useFonts } from 'expo-font';
 import { initializeDatabase } from '../src/database/db';
 import { seedSampleData } from '../src/database/seedData';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load custom fonts
+  const [fontsLoaded] = useFonts({
+    'Buntera-Demo': require('../assets/Buntera Demo.otf'),
+  });
 
   useEffect(() => {
     async function prepare() {
@@ -40,7 +46,7 @@ export default function RootLayout() {
     );
   }
 
-  if (!isReady) {
+  if (!isReady || !fontsLoaded) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#4CAF50" />
