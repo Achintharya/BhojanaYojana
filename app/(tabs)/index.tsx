@@ -149,6 +149,31 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* What's in My Fridge */}
+      <TouchableOpacity
+        style={styles.fridgeCard}
+        onPress={() => router.push('/fridge-recipes')}
+        activeOpacity={0.7}
+      >
+        <View style={styles.fridgeContent}>
+          <View style={styles.fridgeLeft}>
+            <View style={styles.fridgeIconContainer}>
+              <Text style={styles.fridgeIcon}>🧊</Text>
+            </View>
+            <View>
+              <Text style={styles.fridgeTitle}>What's in My Fridge?</Text>
+              <Text style={styles.fridgeMessage}>See recipes you can make with what you have</Text>
+            </View>
+          </View>
+          <View style={styles.fridgeRight}>
+            <Text style={styles.fridgeVegetables}>🍅🧄🫑</Text>
+          </View>
+        </View>
+        <View style={styles.fridgeButton}>
+          <Text style={styles.fridgeButtonText}>Find Recipes →</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* Quick Actions */}
       <View style={styles.quickActions}>
         <SectionHeader title="Quick Actions" />
@@ -250,30 +275,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* What's in My Fridge */}
-      <TouchableOpacity
-        style={styles.fridgeCard}
-        onPress={() => router.push('/fridge-recipes')}
-        activeOpacity={0.7}
-      >
-        <View style={styles.fridgeContent}>
-          <View style={styles.fridgeLeft}>
-            <View style={styles.fridgeIconContainer}>
-              <Text style={styles.fridgeIcon}>🧊</Text>
-            </View>
-            <View>
-              <Text style={styles.fridgeTitle}>What's in My Fridge?</Text>
-              <Text style={styles.fridgeMessage}>See recipes you can make with what you have</Text>
-            </View>
-          </View>
-          <View style={styles.fridgeRight}>
-            <Text style={styles.fridgeVegetables}>🍅🧄🫑</Text>
-          </View>
-        </View>
-        <View style={styles.fridgeButton}>
-          <Text style={styles.fridgeButtonText}>Find Recipes →</Text>
-        </View>
-      </TouchableOpacity>
     </ScreenContainer>
   );
 }

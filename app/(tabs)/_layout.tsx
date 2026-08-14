@@ -23,19 +23,21 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.secondary,
         tabBarStyle: {
           position: 'absolute',
+          bottom: 20,
+          left: 20,
+          right: 20,
           backgroundColor: colors.primary,
           height: Platform.OS === 'android' ? 70 : 85,
           paddingBottom: Platform.OS === 'android' ? 10 : 20,
           paddingTop: 8,
           borderTopWidth: 0,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          borderRadius: 25,
           marginHorizontal: 0,
           elevation: 10,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
+          shadowOpacity: 0.25,
+          shadowRadius: 15,
         },
         tabBarLabelStyle: {
           fontSize: typography.size.xs,
@@ -63,7 +65,7 @@ export default function TabsLayout() {
           title: 'Pantry',
           tabBarLabel: 'Pantry',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="jar" size={size} color={color} />
+            <Ionicons name="archive" size={size} color={color} />
           ),
         }}
       />
