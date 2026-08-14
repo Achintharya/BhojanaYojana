@@ -215,7 +215,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/nutrition')}
             backgroundColor="#F5E6D3"
             textColor="#3D2817"
-            iconColor="#3D2817"
+            iconColor="#FF8A3D"
           />
         </View>
       </View>
