@@ -1,6 +1,6 @@
 # Bhojana Yojana
 
-A local-first household grocery, pantry, meal-planning, recipe, and meal-preparation app for Android tablets.
+A local-first household grocery, pantry, meal-planning, recipe, and meal-preparation app for Android tablets and Web.
 
 ## Project Status
 
@@ -13,8 +13,24 @@ This is V1 foundation - the core architecture, database, and navigation structur
 - **React Native** with **Expo SDK 57**
 - **TypeScript** (strict mode enabled)
 - **Expo Router** for file-based navigation
-- **SQLite** (expo-sqlite) for local data storage
-- Target: Android tablets (cheap hardware, local-first)
+- **SQLite** (expo-sqlite) for native platforms (iOS/Android)
+- **localStorage** for Web platform persistence
+- Target: Android tablets (cheap hardware, local-first) + Web
+
+## Platform Support
+
+| Platform | Storage | Status |
+|----------|---------|--------|
+| **Android** | SQLite | ✅ Fully Supported |
+| **iOS** | SQLite | ✅ Fully Supported |
+| **Web** | localStorage | ✅ Fully Supported |
+
+### Web Platform Notes
+- Uses custom localStorage-based persistence layer
+- SQLite-compatible API for seamless cross-platform development
+- ~5-10MB storage limit (sufficient for household data)
+- Data persists across browser sessions
+- See [Web Persistence Documentation](docs/WEB_PERSISTENCE.md)
 
 ## Project Structure
 

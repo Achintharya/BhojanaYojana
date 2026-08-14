@@ -5,23 +5,32 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { PreparationTask } from '../../database/types';
+import { supportsNativeNotifications } from '../../utils/platform';
 
-// Configure notification behavior when app is in foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Configure notification behavior when app is in foreground (Native only)
+if (supportsNativeNotifications) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 /**
  * Request notification permissions from the user
  * Returns true if granted, false otherwise
  */
 export async function requestNotificationPermissions(): Promise<boolean> {
+  // Web doesn't support native notifications
+  if (!supportsNativeNotifications) {
+    console.log('Native notifications not supported on this platform');
+    return false;
+  }
+
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -58,6 +67,11 @@ export async function requestNotificationPermissions(): Promise<boolean> {
  * Check if notification permissions are granted
  */
 export async function hasNotificationPermissions(): Promise<boolean> {
+  // Web doesn't support native notifications
+  if (!supportsNativeNotifications) {
+    return false;
+  }
+
   try {
     const { status } = await Notifications.getPermissionsAsync();
     return status === 'granted';
@@ -72,6 +86,12 @@ export async function hasNotificationPermissions(): Promise<boolean> {
  * Returns the notification identifier or null on failure
  */
 export async function scheduleTaskNotification(task: PreparationTask): Promise<string | null> {
+  // Web doesn't support native notifications
+  if (!supportsNativeNotifications) {
+    console.log('Native notifications not supported on Web');
+    return null;
+  }
+
   try {
     // Check permissions first
     const hasPermission = await hasNotificationPermissions();
@@ -126,6 +146,10 @@ export async function scheduleTaskNotification(task: PreparationTask): Promise<s
  * Cancel a scheduled notification
  */
 export async function cancelNotification(notificationId: string): Promise<boolean> {
+  if (!supportsNativeNotifications) {
+    return true; // No-op on Web
+  }
+
   try {
     await Notifications.cancelScheduledNotificationAsync(notificationId);
     console.log(`Notification cancelled: ${notificationId}`);
@@ -153,6 +177,10 @@ export async function cancelNotifications(notificationIds: string[]): Promise<vo
  * Cancel all scheduled notifications
  */
 export async function cancelAllNotifications(): Promise<void> {
+  if (!supportsNativeNotifications) {
+    return; // No-op on Web
+  }
+
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
     console.log('All notifications cancelled');
@@ -186,6 +214,10 @@ export async function updateTaskNotification(
  * Get all scheduled notifications (useful for debugging)
  */
 export async function getAllScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
+  if (!supportsNativeNotifications) {
+    return []; // Empty on Web
+  }
+
   try {
     return await Notifications.getAllScheduledNotificationsAsync();
   } catch (error) {
@@ -199,6 +231,11 @@ export async function getAllScheduledNotifications(): Promise<Notifications.Noti
  * Useful for testing notification setup
  */
 export async function sendTestNotification(): Promise<boolean> {
+  if (!supportsNativeNotifications) {
+    console.log('Test notifications not supported on Web');
+    return false;
+  }
+
   try {
     const hasPermission = await hasNotificationPermissions();
     if (!hasPermission) {

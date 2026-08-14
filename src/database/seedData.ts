@@ -2,10 +2,17 @@
  * Sample data seeding for testing
  * Seeds recipes, pantry items, and default nutrition targets
  */
-import { getDatabase } from './db';
+import { getDatabase, isMockDatabase } from './db';
 
 export async function seedSampleData(): Promise<void> {
   const db = getDatabase();
+
+  // Use minimal seed data for Web platform
+  if (isMockDatabase()) {
+    console.log('Seeding minimal Web sample data...');
+    await seedWebData(db);
+    return;
+  }
 
   try {
     // Check if data already exists
@@ -365,6 +372,114 @@ export async function seedSampleData(): Promise<void> {
     console.log('- Default nutrition targets set');
   } catch (error) {
     console.error('Error seeding sample data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Seed minimal data for Web platform
+ */
+async function seedWebData(db: any): Promise<void> {
+  try {
+    // Check if data already exists
+    const existingRecipes = await db.getAllAsync('SELECT * FROM recipes');
+    if (existingRecipes.length > 0) {
+      console.log('Web sample data already seeded');
+      return;
+    }
+
+    console.log('Seeding minimal Web data...');
+
+    // 1. Create a few pantry items
+    const riceResult = await db.runAsync(
+      'INSERT INTO pantry_items (name, quantity, unit, low_stock_threshold) VALUES (?, ?, ?, ?)',
+      ['Rice', 5, 'kg', 1]
+    );
+    const ricePantryId = riceResult.lastInsertRowId;
+
+    const dalResult = await db.runAsync(
+      'INSERT INTO pantry_items (name, quantity, unit, low_stock_threshold) VALUES (?, ?, ?, ?)',
+      ['Toor Dal', 2, 'kg', 0.5]
+    );
+    const dalPantryId = dalResult.lastInsertRowId;
+
+    const gheeResult = await db.runAsync(
+      'INSERT INTO pantry_items (name, quantity, unit, low_stock_threshold) VALUES (?, ?, ?, ?)',
+      ['Ghee', 0.5, 'kg', 0.2]
+    );
+    const gheePantryId = gheeResult.lastInsertRowId;
+
+    // 2. Create simple recipes
+    // Recipe 1: Plain Rice
+    const riceRecipeResult = await db.runAsync(
+      `INSERT INTO recipes (name, prep_time_minutes, cook_time_minutes, servings, 
+       calories_per_serving, protein_grams, carbs_grams, fat_grams, fiber_grams)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['Steamed Rice', 5, 20, 4, 180, 4, 40, 0.5, 1]
+    );
+    const riceRecipeId = riceRecipeResult.lastInsertRowId;
+
+    await db.runAsync(
+      'INSERT INTO recipe_ingredients (recipe_id, pantry_item_id, quantity, unit, is_optional) VALUES (?, ?, ?, ?, ?)',
+      [riceRecipeId, ricePantryId, 200, 'g', 0]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        riceRecipeId,
+        'en',
+        '1. Wash rice thoroughly\n2. Add water (1:2 ratio)\n3. Pressure cook for 2 whistles\n4. Let steam release naturally\n5. Fluff and serve',
+        'Perfect accompaniment for any curry',
+      ]
+    );
+
+    // Recipe 2: Dal Tadka
+    const dalRecipeResult = await db.runAsync(
+      `INSERT INTO recipes (name, prep_time_minutes, cook_time_minutes, servings,
+       calories_per_serving, protein_grams, carbs_grams, fat_grams, fiber_grams)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['Dal Tadka', 10, 30, 4, 250, 12, 35, 6, 8]
+    );
+    const dalRecipeId = dalRecipeResult.lastInsertRowId;
+
+    await db.runAsync(
+      'INSERT INTO recipe_ingredients (recipe_id, pantry_item_id, quantity, unit, is_optional) VALUES (?, ?, ?, ?, ?)',
+      [dalRecipeId, dalPantryId, 200, 'g', 0]
+    );
+
+    await db.runAsync(
+      'INSERT INTO recipe_ingredients (recipe_id, pantry_item_id, quantity, unit, is_optional) VALUES (?, ?, ?, ?, ?)',
+      [dalRecipeId, gheePantryId, 20, 'g', 0]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        dalRecipeId,
+        'en',
+        '1. Pressure cook dal with turmeric\n2. Temper with ghee, cumin, onions\n3. Add tomatoes and cook\n4. Mix with cooked dal\n5. Garnish with coriander',
+        'Protein-rich and nutritious',
+      ]
+    );
+
+    // 3. Create default nutrition target
+    await db.runAsync(
+      `INSERT INTO nutrition_targets (target_date, calories_target, protein_target, 
+       carbs_target, fat_target, fiber_target) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      ['default', 2000, 50, 250, 70, 25]
+    );
+
+    console.log('Web sample data seeded successfully!');
+    console.log('- 3 pantry items');
+    console.log('- 2 recipes with nutrition data');
+    console.log('- Recipe ingredients linked to pantry');
+    console.log('- Default nutrition target');
+  } catch (error) {
+    console.error('Error seeding Web data:', error);
     throw error;
   }
 }

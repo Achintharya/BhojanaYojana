@@ -9,6 +9,7 @@ import { PreparationTask } from '../../src/database/types';
 import { getUpcomingTasks, updatePreparationTask } from '../../src/modules/preparation/preparationData';
 import TomorrowPrepCard from '../../src/components/TomorrowPrepCard';
 import { requestNotificationPermissions, hasNotificationPermissions } from '../../src/modules/preparation/notificationManager';
+import { supportsNativeNotifications, isWeb } from '../../src/utils/platform';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -51,6 +52,15 @@ export default function HomeScreen() {
   };
 
   const handleEnableNotifications = async () => {
+    if (!supportsNativeNotifications) {
+      Alert.alert(
+        'Web Platform',
+        'Native notifications are not supported on Web. Preparation tasks will remain visible in the app. Use the Android app for notification reminders.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     const granted = await requestNotificationPermissions();
     if (granted) {
       setNotificationsEnabled(true);
@@ -81,9 +91,13 @@ export default function HomeScreen() {
           >
             <Text style={styles.notificationBannerIcon}>🔔</Text>
             <View style={styles.notificationBannerContent}>
-              <Text style={styles.notificationBannerTitle}>Enable Notifications</Text>
+              <Text style={styles.notificationBannerTitle}>
+                {isWeb ? 'Notifications (Web)' : 'Enable Notifications'}
+              </Text>
               <Text style={styles.notificationBannerText}>
-                Get reminders for meal preparation tasks
+                {isWeb
+                  ? 'Native notifications not supported on Web. Prep tasks remain visible. Use Android app for reminders.'
+                  : 'Get reminders for meal preparation tasks'}
               </Text>
             </View>
           </TouchableOpacity>

@@ -3,6 +3,8 @@
  */
 import * as SQLite from 'expo-sqlite';
 import { SCHEMA_VERSION, MIGRATIONS } from './schema';
+import { supportsNativeSQLite } from '../utils/platform';
+import { WebDatabase } from './webDatabase';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -11,11 +13,20 @@ let db: SQLite.SQLiteDatabase | null = null;
  */
 export async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (db) {
-    return db;
+    return db as SQLite.SQLiteDatabase;
+  }
+
+  // Web platform check
+  if (!supportsNativeSQLite) {
+    console.warn('Native SQLite not supported on Web. Using mock database.');
+    // Create a mock database object for Web
+    // Web will use localStorage-based persistence in data access layers
+    db = createMockDatabase();
+    return db as SQLite.SQLiteDatabase;
   }
 
   try {
-    // Open or create the database
+    // Open or create the database (Native only)
     db = await SQLite.openDatabaseAsync('bhojanayojana.db');
 
     // Enable foreign keys
@@ -35,6 +46,20 @@ export async function initializeDatabase(): Promise<SQLite.SQLiteDatabase> {
     console.error('Failed to initialize database:', error);
     throw error;
   }
+}
+
+/**
+ * Create a Web database for Web platform
+ * Web will use localStorage for persistence instead of SQLite
+ */
+function createMockDatabase(): any {
+  console.log('Creating Web database with localStorage persistence');
+  const webDb = new WebDatabase();
+  webDb.initialize();
+  // Add _isMock flag for backwards compatibility
+  (webDb as any)._isMock = true;
+  (webDb as any)._platform = 'web';
+  return webDb;
 }
 
 /**
@@ -84,6 +109,13 @@ export function getDatabase(): SQLite.SQLiteDatabase {
     throw new Error('Database not initialized. Call initializeDatabase() first.');
   }
   return db;
+}
+
+/**
+ * Check if we're using a mock database (Web platform)
+ */
+export function isMockDatabase(): boolean {
+  return db ? (db as any)._isMock === true : false;
 }
 
 /**
