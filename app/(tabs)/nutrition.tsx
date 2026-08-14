@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   editButton: {
-    backgroundColor: colors.info,
+    backgroundColor: colors.accent,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderRadius: spacing.radiusMedium,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     ...textStyles.button,
-    color: colors.textOnPrimary,
+    color: colors.textOnAccent,
   },
   targetsCard: {
     backgroundColor: colors.cardBackground,
