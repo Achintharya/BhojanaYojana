@@ -20,17 +20,25 @@ export const typography = {
     default: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   }),
   
-  // Font sizes
+  // Font sizes (increased by 25%)
   size: {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    md: 18,
-    lg: 20,
-    xl: 24,
-    xxl: 28,
-    xxxl: 32,
-    huge: 40,
+    xs: 15,
+    sm: 17.5,
+    base: 20,
+    md: 22.5,
+    lg: 25,
+    xl: 30,
+    xxl: 35,
+    xxxl: 40,
+    huge: 50,
+  },
+  
+  // Letter spacing
+  letterSpacing: {
+    tight: 0,
+    normal: 0.3,
+    relaxed: 0.5,
+    wide: 0.8,
   },
   
   // Font weights
@@ -57,6 +65,7 @@ export const textStyles = {
     fontSize: typography.size.xxxl,
     fontWeight: typography.weight.bold,
     lineHeight: typography.size.xxxl * typography.lineHeight.tight,
+    letterSpacing: typography.letterSpacing.normal,
   },
   
   // Section headers
@@ -65,6 +74,7 @@ export const textStyles = {
     fontSize: typography.size.xl,
     fontWeight: typography.weight.bold,
     lineHeight: typography.size.xl * typography.lineHeight.tight,
+    letterSpacing: typography.letterSpacing.normal,
   },
   
   // Card titles
@@ -73,6 +83,25 @@ export const textStyles = {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold,
     lineHeight: typography.size.lg * typography.lineHeight.normal,
+    letterSpacing: typography.letterSpacing.normal,
+  },
+  
+  // Subtitle
+  subtitle: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold,
+    lineHeight: typography.size.md * typography.lineHeight.normal,
+    letterSpacing: typography.letterSpacing.normal,
+  },
+  
+  // Title
+  title: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.bold,
+    lineHeight: typography.size.xl * typography.lineHeight.tight,
+    letterSpacing: typography.letterSpacing.normal,
   },
   
   // Body text
@@ -81,6 +110,7 @@ export const textStyles = {
     fontSize: typography.size.base,
     fontWeight: typography.weight.regular,
     lineHeight: typography.size.base * typography.lineHeight.normal,
+    letterSpacing: typography.letterSpacing.normal,
   },
   
   // Body large
@@ -89,6 +119,7 @@ export const textStyles = {
     fontSize: typography.size.md,
     fontWeight: typography.weight.regular,
     lineHeight: typography.size.md * typography.lineHeight.normal,
+    letterSpacing: typography.letterSpacing.normal,
   },
   
   // Button text
@@ -97,6 +128,7 @@ export const textStyles = {
     fontSize: typography.size.md,
     fontWeight: typography.weight.semibold,
     lineHeight: typography.size.md * typography.lineHeight.normal,
+    letterSpacing: typography.letterSpacing.relaxed,
   },
   
   // Caption/small text
@@ -105,6 +137,7 @@ export const textStyles = {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.regular,
     lineHeight: typography.size.sm * typography.lineHeight.normal,
+    letterSpacing: typography.letterSpacing.normal,
   },
   
   // Label text
@@ -113,6 +146,7 @@ export const textStyles = {
     fontSize: typography.size.sm,
     fontWeight: typography.weight.medium,
     lineHeight: typography.size.sm * typography.lineHeight.normal,
+    letterSpacing: typography.letterSpacing.normal,
   },
 };
 
