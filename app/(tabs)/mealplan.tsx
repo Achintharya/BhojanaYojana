@@ -3,7 +3,7 @@
  * Plan and schedule meals
  */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Recipe, MealType, MealPlan, PreparationTask } from '../../src/database/types';
 import {
@@ -23,10 +23,17 @@ import {
   compareToTargets,
   MealPlanWithRecipe,
 } from '../../src/modules/mealPlanning/mealPlanningLogic';
+import ScreenContainer from '../../src/components/common/ScreenContainer';
+import PrimaryButton from '../../src/components/common/PrimaryButton';
+import SecondaryButton from '../../src/components/common/SecondaryButton';
+import SectionHeader from '../../src/components/common/SectionHeader';
 import MealPlanCard from '../../src/components/MealPlanCard';
 import AddMealModal from '../../src/components/AddMealModal';
 import NutritionSummaryCard from '../../src/components/NutritionSummaryCard';
 import MealPlanGeneratorModal from '../../src/components/MealPlanGeneratorModal';
+import colors from '../../src/theme/colors';
+import spacing from '../../src/theme/spacing';
+import { textStyles, typography } from '../../src/theme/typography';
 import { syncMealPlanToGrocery } from '../../src/modules/mealPlanning/mealPlanGroceryIntegration';
 import { GeneratedMealPlan } from '../../src/modules/mealPlanning/mealPlanGenerator';
 import {
@@ -442,78 +449,99 @@ export default function MealPlanScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Date Selector */}
       <View style={styles.dateSelector}>
         <TouchableOpacity style={styles.dateButton} onPress={handlePrevDay} activeOpacity={0.7}>
-          <Text style={styles.dateButtonText}>◀ Prev</Text>
+          <Text style={styles.dateButtonText}>‹</Text>
         </TouchableOpacity>
         <View style={styles.dateDisplay}>
           <Text style={styles.dateText}>{formatDateForDisplay(formatDateForDB(selectedDate))}</Text>
-          {isToday && <Text style={styles.todayBadge}>Today</Text>}
+          {isToday && <View style={styles.todayBadge}><Text style={styles.todayBadgeText}>Today</Text></View>}
         </View>
         <TouchableOpacity style={styles.dateButton} onPress={handleNextDay} activeOpacity={0.7}>
-          <Text style={styles.dateButtonText}>Next ▶</Text>
+          <Text style={styles.dateButtonText}>›</Text>
         </TouchableOpacity>
       </View>
 
       {!isToday && (
-        <TouchableOpacity style={styles.todayButton} onPress={handleToday} activeOpacity={0.7}>
-          <Text style={styles.todayButtonText}>Jump to Today</Text>
-        </TouchableOpacity>
+        <View style={styles.todayButtonContainer}>
+          <SecondaryButton
+            title="Jump to Today"
+            onPress={handleToday}
+            style={styles.todayButton}
+          />
+        </View>
       )}
 
-      <ScrollView style={styles.content}>
+      <ScreenContainer scrollable={true}>
         {loading ? (
-          <Text style={styles.loadingText}>Loading...</Text>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
         ) : (
           <>
-            {/* Generate Meal Plan Button */}
-            <TouchableOpacity
-              style={styles.generateButton}
-              onPress={handleGeneratePlan}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.generateButtonIcon}>✨</Text>
-              <View style={styles.generateButtonContent}>
-                <Text style={styles.generateButtonTitle}>Generate Meal Plan</Text>
-                <Text style={styles.generateButtonSubtitle}>
-                  Create balanced meals based on your nutrition targets
-                </Text>
-              </View>
-            </TouchableOpacity>
+            {/* Action Buttons */}
+            <View style={styles.actionsSection}>
+              <TouchableOpacity
+                style={styles.generateCard}
+                onPress={handleGeneratePlan}
+                activeOpacity={0.7}
+              >
+                <View style={styles.generateIcon}>
+                  <Text style={styles.generateIconText}>✨</Text>
+                </View>
+                <View style={styles.generateContent}>
+                  <Text style={styles.generateTitle}>Generate Meal Plan</Text>
+                  <Text style={styles.generateSubtitle}>
+                    Create balanced meals for your nutrition goals
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
-            {mealPlans.length > 0 && (
-              <>
+              {mealPlans.length > 0 && (
                 <TouchableOpacity
-                  style={styles.syncButton}
+                  style={styles.syncCard}
                   onPress={handleSyncToGrocery}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.syncButtonIcon}>🛒</Text>
-                  <View style={styles.syncButtonContent}>
-                    <Text style={styles.syncButtonTitle}>Sync to Grocery List</Text>
-                    <Text style={styles.syncButtonSubtitle}>Add missing ingredients for next 7 days</Text>
+                  <View style={styles.syncIcon}>
+                    <Text style={styles.syncIconText}>🛒</Text>
+                  </View>
+                  <View style={styles.syncContent}>
+                    <Text style={styles.syncTitle}>Sync to Grocery List</Text>
+                    <Text style={styles.syncSubtitle}>Add ingredients for next 7 days</Text>
                   </View>
                 </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Nutrition Summary */}
+            {mealPlans.length > 0 && (
+              <View style={styles.nutritionSection}>
                 <NutritionSummaryCard comparison={comparison} />
-              </>
+              </View>
             )}
 
-            {renderMealSection('breakfast', 'Breakfast', '🌅')}
-            {renderMealSection('lunch', 'Lunch', '☀️')}
-            {renderMealSection('dinner', 'Dinner', '🌙')}
+            {/* Meals Section */}
+            <View style={styles.mealsSection}>
+              <SectionHeader title="Today's Meals" />
+              {renderMealSection('breakfast', 'Breakfast', '🌅')}
+              {renderMealSection('lunch', 'Lunch', '☀️')}
+              {renderMealSection('dinner', 'Dinner', '🌙')}
+            </View>
 
             {mealPlans.length === 0 && (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateIcon}>📅</Text>
                 <Text style={styles.emptyStateTitle}>No meals planned</Text>
-                <Text style={styles.emptyStateSubtitle}>
-                  Start planning your meals by adding breakfast, lunch, or dinner
+                <Text style={styles.emptyStateMessage}>
+                  Add breakfast, lunch, or dinner to start planning
                 </Text>
               </View>
             )}
           </>
         )}
-      </ScrollView>
+      </ScreenContainer>
 
       <AddMealModal
         visible={modalVisible}
@@ -542,175 +570,192 @@ export default function MealPlanScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   dateSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#fff',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   dateButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    minHeight: 44,
+    width: spacing.buttonHeight,
+    height: spacing.buttonHeight,
     justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: spacing.radiusMedium,
+    backgroundColor: colors.surfaceLight,
   },
   dateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4CAF50',
+    fontSize: 28,
+    color: colors.primary,
+    fontWeight: typography.weight.bold,
   },
   dateDisplay: {
     alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: spacing.md,
   },
   dateText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    ...textStyles.title,
+    fontSize: typography.size.lg,
   },
   todayBadge: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontWeight: '600',
-    marginTop: 2,
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: spacing.radiusSmall,
+    marginTop: spacing.xs,
+  },
+  todayBadgeText: {
+    ...textStyles.caption,
+    color: colors.textOnPrimary,
+    fontWeight: typography.weight.semibold,
+  },
+  todayButtonContainer: {
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   todayButton: {
-    backgroundColor: '#E8F5E9',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 8,
+    width: '100%',
+  },
+  loadingContainer: {
+    paddingVertical: spacing.huge,
     alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  todayButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4CAF50',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
   },
   loadingText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#999',
-    marginTop: 32,
+    ...textStyles.body,
+    color: colors.textTertiary,
+  },
+  actionsSection: {
+    gap: spacing.cardGap,
+    marginBottom: spacing.sectionGap,
+  },
+  generateCard: {
+    backgroundColor: colors.primary,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  generateIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  generateIconText: {
+    fontSize: 28,
+  },
+  generateContent: {
+    flex: 1,
+  },
+  generateTitle: {
+    ...textStyles.cardTitle,
+    color: colors.textOnPrimary,
+    marginBottom: spacing.xs,
+  },
+  generateSubtitle: {
+    ...textStyles.caption,
+    color: colors.secondary,
+  },
+  syncCard: {
+    backgroundColor: colors.info,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  syncIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.cardBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  syncIconText: {
+    fontSize: 28,
+  },
+  syncContent: {
+    flex: 1,
+  },
+  syncTitle: {
+    ...textStyles.cardTitle,
+    color: colors.textOnPrimary,
+    marginBottom: spacing.xs,
+  },
+  syncSubtitle: {
+    ...textStyles.caption,
+    color: colors.secondary,
+  },
+  nutritionSection: {
+    marginBottom: spacing.sectionGap,
+  },
+  mealsSection: {
+    gap: spacing.cardGap,
   },
   mealSection: {
-    marginBottom: 16,
+    marginTop: spacing.cardGap,
   },
   emptyMeal: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 24,
+    backgroundColor: colors.cardBackground,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
     alignItems: 'center',
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#e0e0e0',
+    borderColor: colors.borderLight,
   },
   emptyMealIcon: {
-    fontSize: 32,
-    marginBottom: 8,
+    fontSize: 40,
+    marginBottom: spacing.sm,
   },
   emptyMealTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 12,
+    ...textStyles.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
   },
   addMealButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    minHeight: 44,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: spacing.radiusMedium,
+    minHeight: spacing.buttonHeight,
     justifyContent: 'center',
   },
   addMealButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    ...textStyles.button,
+    color: colors.textOnPrimary,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 64,
+    paddingVertical: spacing.huge,
+    paddingHorizontal: spacing.lg,
   },
   emptyStateIcon: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    ...textStyles.subtitle,
+    marginBottom: spacing.sm,
   },
-  emptyStateSubtitle: {
-    fontSize: 14,
-    color: '#666',
+  emptyStateMessage: {
+    ...textStyles.body,
+    color: colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 32,
-    lineHeight: 20,
-  },
-  syncButton: {
-    backgroundColor: '#2196F3',
-    borderRadius: 8,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    minHeight: 44,
-  },
-  syncButtonIcon: {
-    fontSize: 32,
-    marginRight: 12,
-  },
-  syncButtonContent: {
-    flex: 1,
-  },
-  syncButtonTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  syncButtonSubtitle: {
-    fontSize: 12,
-    color: '#E3F2FD',
-  },
-  generateButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    minHeight: 44,
-  },
-  generateButtonIcon: {
-    fontSize: 32,
-    marginRight: 12,
-  },
-  generateButtonContent: {
-    flex: 1,
-  },
-  generateButtonTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  generateButtonSubtitle: {
-    fontSize: 12,
-    color: '#E8F5E9',
   },
 });

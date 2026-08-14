@@ -3,7 +3,7 @@
  * Set and track nutritional goals
  */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { NutritionTarget } from '../../src/database/types';
 import {
@@ -20,8 +20,14 @@ import {
   MealPlanWithRecipe,
   roundToDecimal,
 } from '../../src/modules/mealPlanning/mealPlanningLogic';
+import ScreenContainer from '../../src/components/common/ScreenContainer';
+import SectionHeader from '../../src/components/common/SectionHeader';
+import EmptyState from '../../src/components/common/EmptyState';
 import NutritionSummaryCard from '../../src/components/NutritionSummaryCard';
 import NutritionTargetEditor from '../../src/components/NutritionTargetEditor';
+import colors from '../../src/theme/colors';
+import spacing from '../../src/theme/spacing';
+import { textStyles, typography } from '../../src/theme/typography';
 
 export default function NutritionScreen() {
   const [targets, setTargets] = useState<NutritionTarget | null>(null);
@@ -124,314 +130,300 @@ export default function NutritionScreen() {
       };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Daily Nutrition Targets</Text>
-            <Text style={styles.subtitle}>
-              {targets ? 'Your configured daily goals' : 'Using default targets'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => setEditing(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.editButtonText}>Edit</Text>
-          </TouchableOpacity>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Daily Nutrition Targets</Text>
+          <Text style={styles.headerSubtitle}>
+            {targets ? 'Your configured daily goals' : 'Using default targets'}
+          </Text>
         </View>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => setEditing(true)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.editButtonText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
 
+      <ScreenContainer scrollable={true}>
+        {/* Targets Card */}
         <View style={styles.targetsCard}>
           <View style={styles.targetRow}>
-            <Text style={styles.targetLabel}>Calories</Text>
+            <View style={styles.targetLeft}>
+              <Text style={styles.targetIcon}>🔥</Text>
+              <Text style={styles.targetLabel}>Calories</Text>
+            </View>
             <Text style={styles.targetValue}>{roundToDecimal(displayTargets.calories, 0)} kcal</Text>
           </View>
           <View style={styles.targetRow}>
-            <Text style={styles.targetLabel}>Protein</Text>
+            <View style={styles.targetLeft}>
+              <Text style={styles.targetIcon}>💪</Text>
+              <Text style={styles.targetLabel}>Protein</Text>
+            </View>
             <Text style={styles.targetValue}>{roundToDecimal(displayTargets.protein, 1)} g</Text>
           </View>
           <View style={styles.targetRow}>
-            <Text style={styles.targetLabel}>Carbohydrates</Text>
+            <View style={styles.targetLeft}>
+              <Text style={styles.targetIcon}>🌾</Text>
+              <Text style={styles.targetLabel}>Carbs</Text>
+            </View>
             <Text style={styles.targetValue}>{roundToDecimal(displayTargets.carbs, 1)} g</Text>
           </View>
           <View style={styles.targetRow}>
-            <Text style={styles.targetLabel}>Fat</Text>
+            <View style={styles.targetLeft}>
+              <Text style={styles.targetIcon}>🥑</Text>
+              <Text style={styles.targetLabel}>Fat</Text>
+            </View>
             <Text style={styles.targetValue}>{roundToDecimal(displayTargets.fat, 1)} g</Text>
           </View>
           <View style={styles.targetRow}>
-            <Text style={styles.targetLabel}>Fiber</Text>
+            <View style={styles.targetLeft}>
+              <Text style={styles.targetIcon}>🥬</Text>
+              <Text style={styles.targetLabel}>Fiber</Text>
+            </View>
             <Text style={styles.targetValue}>{roundToDecimal(displayTargets.fiber, 1)} g</Text>
           </View>
         </View>
 
-        <View style={styles.divider} />
+        {/* Today's Progress Section */}
+        <View style={styles.progressSection}>
+          <SectionHeader title="Today's Progress" />
 
-        <Text style={styles.sectionTitle}>Today's Progress</Text>
-
-        {loading ? (
-          <Text style={styles.loadingText}>Loading...</Text>
-        ) : todayMealPlans.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📋</Text>
-            <Text style={styles.emptyTitle}>No meals planned for today</Text>
-            <Text style={styles.emptySubtitle}>
-              Go to Meal Planner to add meals and track your nutrition
-            </Text>
-          </View>
-        ) : (
-          <>
-            <NutritionSummaryCard comparison={comparison} />
-
-            {alignment.warnings.length > 0 && (
-              <View style={styles.warningsCard}>
-                <Text style={styles.warningsTitle}>⚠️ Diet Alignment</Text>
-                {alignment.warnings.map((warning, index) => (
-                  <Text key={index} style={styles.warningText}>
-                    • {warning}
-                  </Text>
-                ))}
-                {alignment.isAligned && (
-                  <Text style={styles.alignedText}>✓ Overall targets are met</Text>
-                )}
-              </View>
-            )}
-
-            {alignment.isAligned && alignment.warnings.length === 0 && (
-              <View style={styles.successCard}>
-                <Text style={styles.successIcon}>✅</Text>
-                <Text style={styles.successTitle}>Great Job!</Text>
-                <Text style={styles.successText}>
-                  Your planned meals align well with your nutrition targets
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.mealsCard}>
-              <Text style={styles.mealsTitle}>Today's Meals</Text>
-              {todayMealPlans.map((plan) => (
-                <View key={plan.id} style={styles.mealRow}>
-                  <Text style={styles.mealName}>
-                    {plan.meal_type.charAt(0).toUpperCase() + plan.meal_type.slice(1)}:{' '}
-                    {plan.recipe.name}
-                  </Text>
-                  <Text style={styles.mealServings}>×{plan.servings}</Text>
-                </View>
-              ))}
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading...</Text>
             </View>
-          </>
-        )}
+          ) : todayMealPlans.length === 0 ? (
+            <EmptyState
+              icon="📋"
+              title="No meals planned today"
+              message="Add meals in the Meal Planner to track your nutrition"
+            />
+          ) : (
+            <>
+              <NutritionSummaryCard comparison={comparison} />
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>ℹ️ About This Feature</Text>
-          <Text style={styles.infoText}>
+              {alignment.warnings.length > 0 && (
+                <View style={styles.warningsCard}>
+                  <Text style={styles.warningsTitle}>⚠️ Diet Alignment</Text>
+                  {alignment.warnings.map((warning, index) => (
+                    <Text key={index} style={styles.warningText}>
+                      • {warning}
+                    </Text>
+                  ))}
+                  {alignment.isAligned && (
+                    <Text style={styles.alignedText}>✓ Overall targets are met</Text>
+                  )}
+                </View>
+              )}
+
+              {alignment.isAligned && alignment.warnings.length === 0 && (
+                <View style={styles.successCard}>
+                  <Text style={styles.successIcon}>✅</Text>
+                  <Text style={styles.successTitle}>Great Job!</Text>
+                  <Text style={styles.successText}>
+                    Your planned meals align well with your nutrition targets
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.mealsCard}>
+                <Text style={styles.mealsTitle}>Today's Meals</Text>
+                {todayMealPlans.map((plan) => (
+                  <View key={plan.id} style={styles.mealRow}>
+                    <Text style={styles.mealName}>
+                      {plan.meal_type.charAt(0).toUpperCase() + plan.meal_type.slice(1)}:{' '}
+                      {plan.recipe.name}
+                    </Text>
+                    <Text style={styles.mealServings}>×{plan.servings}</Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* Info Note */}
+        <View style={styles.infoNote}>
+          <Text style={styles.infoNoteTitle}>ℹ️ About This Feature</Text>
+          <Text style={styles.infoNoteText}>
             This tool helps you plan meals that align with your nutritional goals. The comparison
             shows how your planned meals match your targets. Remember, this is for guidance only -
             consult healthcare professionals for personalized nutrition advice.
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScreenContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  content: {
-    padding: 16,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    padding: spacing.base,
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+  headerLeft: {
+    flex: 1,
+    paddingRight: spacing.md,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
+  headerTitle: {
+    ...textStyles.title,
+    marginBottom: spacing.xs,
+  },
+  headerSubtitle: {
+    ...textStyles.caption,
+    color: colors.textSecondary,
   },
   editButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    minHeight: 44,
+    backgroundColor: colors.info,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: spacing.radiusMedium,
+    minHeight: spacing.buttonHeight,
     justifyContent: 'center',
   },
   editButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    ...textStyles.button,
+    color: colors.textOnPrimary,
   },
   targetsCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: colors.cardBackground,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
+    marginBottom: spacing.sectionGap,
   },
   targetRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    alignItems: 'center',
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.borderLight,
+  },
+  targetLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  targetIcon: {
+    fontSize: 24,
   },
   targetLabel: {
-    fontSize: 16,
-    color: '#666',
+    ...textStyles.body,
+    color: colors.textSecondary,
   },
   targetValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    ...textStyles.body,
+    fontWeight: typography.weight.semibold,
+    color: colors.textPrimary,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#e0e0e0',
-    marginVertical: 24,
+  progressSection: {
+    gap: spacing.cardGap,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
+  loadingContainer: {
+    paddingVertical: spacing.huge,
+    alignItems: 'center',
   },
   loadingText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#999',
-    paddingVertical: 32,
-  },
-  emptyState: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 32,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
+    ...textStyles.body,
+    color: colors.textTertiary,
   },
   warningsCard: {
-    backgroundColor: '#FFF3E0',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: colors.warningLight,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
+    marginTop: spacing.cardGap,
   },
   warningsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#F57C00',
-    marginBottom: 12,
+    ...textStyles.cardTitle,
+    color: colors.warning,
+    marginBottom: spacing.sm,
   },
   warningText: {
-    fontSize: 14,
-    color: '#F57C00',
-    marginVertical: 4,
+    ...textStyles.body,
+    color: colors.warning,
+    marginVertical: spacing.xs,
   },
   alignedText: {
-    fontSize: 14,
-    color: '#4CAF50',
-    marginTop: 12,
-    fontWeight: '600',
+    ...textStyles.body,
+    color: colors.success,
+    marginTop: spacing.sm,
+    fontWeight: typography.weight.semibold,
   },
   successCard: {
-    backgroundColor: '#E8F5E9',
-    borderRadius: 8,
-    padding: 24,
+    backgroundColor: colors.successLight,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
     alignItems: 'center',
-    marginBottom: 16,
+    marginTop: spacing.cardGap,
   },
   successIcon: {
     fontSize: 48,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   successTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    marginBottom: 8,
+    ...textStyles.subtitle,
+    color: colors.success,
+    marginBottom: spacing.sm,
   },
   successText: {
-    fontSize: 14,
-    color: '#4CAF50',
+    ...textStyles.body,
+    color: colors.success,
     textAlign: 'center',
   },
   mealsCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: colors.cardBackground,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
+    marginTop: spacing.cardGap,
   },
   mealsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
+    ...textStyles.cardTitle,
+    marginBottom: spacing.sm,
   },
   mealRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.borderLight,
   },
   mealName: {
-    fontSize: 14,
-    color: '#666',
+    ...textStyles.body,
+    color: colors.textSecondary,
     flex: 1,
   },
   mealServings: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    ...textStyles.body,
+    fontWeight: typography.weight.semibold,
+    color: colors.textPrimary,
   },
-  infoBox: {
-    backgroundColor: '#E3F2FD',
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 8,
+  infoNote: {
+    backgroundColor: colors.infoLight,
+    borderRadius: spacing.radiusMedium,
+    padding: spacing.cardPaddingLarge,
+    marginTop: spacing.sectionGap,
   },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1976D2',
-    marginBottom: 8,
+  infoNoteTitle: {
+    ...textStyles.cardTitle,
+    color: colors.info,
+    marginBottom: spacing.sm,
   },
-  infoText: {
-    fontSize: 13,
-    color: '#1976D2',
-    lineHeight: 18,
+  infoNoteText: {
+    ...textStyles.caption,
+    color: colors.info,
+    lineHeight: 20,
   },
 });
