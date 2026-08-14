@@ -137,7 +137,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
   },
   button: {
     flex: 1,
@@ -148,6 +147,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 48,
     justifyContent: 'center',
+    marginRight: 8,
   },
   buttonText: {
     color: '#fff',
@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#f44336',
+    marginRight: 0,
   },
   deleteButtonText: {
     color: '#f44336',

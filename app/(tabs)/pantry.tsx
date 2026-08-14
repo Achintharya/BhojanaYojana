@@ -201,14 +201,16 @@ export default function PantryScreen() {
             </Text>
           </View>
         ) : (
-          items.map((item) => (
-            <PantryItemCard
-              key={item.id}
-              item={item}
-              onEdit={handleEditItem}
-              onDelete={handleDeleteItem}
-            />
-          ))
+          <View>
+            {items.map((item) => (
+              <PantryItemCard
+                key={item.id}
+                item={item}
+                onEdit={handleEditItem}
+                onDelete={handleDeleteItem}
+              />
+            ))}
+          </View>
         )}
       </ScrollView>
 
