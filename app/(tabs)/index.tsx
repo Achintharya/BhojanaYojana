@@ -2,31 +2,136 @@
  * Home/Dashboard screen
  * Overview of pantry, upcoming meals, and prep tasks
  */
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { PreparationTask } from '../../src/database/types';
+import { getUpcomingTasks, updatePreparationTask } from '../../src/modules/preparation/preparationData';
+import TomorrowPrepCard from '../../src/components/TomorrowPrepCard';
+import { requestNotificationPermissions, hasNotificationPermissions } from '../../src/modules/preparation/notificationManager';
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const [upcomingTasks, setUpcomingTasks] = useState<PreparationTask[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Load tasks due in the next 24 hours
+      const tasks = await getUpcomingTasks(24);
+      setUpcomingTasks(tasks);
+
+      // Check notification permissions
+      const hasPerms = await hasNotificationPermissions();
+      setNotificationsEnabled(hasPerms);
+    } catch (error) {
+      console.error('Error loading home screen data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
+
+  const handleCompleteTask = async (taskId: number) => {
+    try {
+      await updatePreparationTask(taskId, { is_completed: 1 });
+      Alert.alert('Success', 'Task marked as completed!', [{ text: 'OK' }]);
+      loadData();
+    } catch (error) {
+      console.error('Error completing task:', error);
+      Alert.alert('Error', 'Failed to complete task');
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermissions();
+    if (granted) {
+      setNotificationsEnabled(true);
+      Alert.alert('Success', 'Notifications enabled! You will receive meal prep reminders.', [
+        { text: 'OK' },
+      ]);
+    } else {
+      Alert.alert(
+        'Permissions Denied',
+        'Please enable notifications in your device settings to receive meal prep reminders.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Welcome to Bhojana Yojana</Text>
         <Text style={styles.subtitle}>Your household meal planning companion</Text>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Dashboard</Text>
-          <Text style={styles.placeholderText}>
-            This is the home screen where you'll see:
-          </Text>
-          <Text style={styles.bulletPoint}>• Items low in stock</Text>
-          <Text style={styles.bulletPoint}>• Items expiring soon</Text>
-          <Text style={styles.bulletPoint}>• Upcoming meals</Text>
-          <Text style={styles.bulletPoint}>• Today's prep tasks</Text>
-        </View>
 
+        {/* Notification Permission Banner */}
+        {!notificationsEnabled && (
+          <TouchableOpacity
+            style={styles.notificationBanner}
+            onPress={handleEnableNotifications}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.notificationBannerIcon}>🔔</Text>
+            <View style={styles.notificationBannerContent}>
+              <Text style={styles.notificationBannerTitle}>Enable Notifications</Text>
+              <Text style={styles.notificationBannerText}>
+                Get reminders for meal preparation tasks
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Tomorrow's Prep Card */}
+        {loading ? (
+          <View style={styles.section}>
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
+        ) : (
+          <TomorrowPrepCard
+            tasks={upcomingTasks}
+            onCompleteTask={handleCompleteTask}
+            onTaskPress={(task) => {
+              // Navigate to meal planner to see the related meal
+              router.push('/mealplan');
+            }}
+          />
+        )}
+
+        {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Stats</Text>
-          <Text style={styles.placeholderText}>
-            Coming soon: Quick overview of your pantry, meals, and nutrition
-          </Text>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/mealplan')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.actionButtonIcon}>📅</Text>
+            <Text style={styles.actionButtonText}>Plan Your Meals</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/recipes')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.actionButtonIcon}>📖</Text>
+            <Text style={styles.actionButtonText}>Browse Recipes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/grocery')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.actionButtonIcon}>🛒</Text>
+            <Text style={styles.actionButtonText}>Grocery List</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -79,5 +184,57 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 8,
     marginVertical: 4,
+  },
+  loadingText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#999',
+    paddingVertical: 24,
+  },
+  notificationBanner: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFB74D',
+  },
+  notificationBannerIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  notificationBannerContent: {
+    flex: 1,
+  },
+  notificationBannerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#E65100',
+    marginBottom: 4,
+  },
+  notificationBannerText: {
+    fontSize: 14,
+    color: '#F57C00',
+  },
+  actionButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  actionButtonIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
   },
 });

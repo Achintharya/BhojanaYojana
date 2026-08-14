@@ -5,7 +5,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Recipe, MealType, MealPlan } from '../../src/database/types';
+import { Recipe, MealType, MealPlan, PreparationTask } from '../../src/database/types';
 import {
   getMealPlansByDate,
   createMealPlan,
@@ -26,7 +26,19 @@ import {
 import MealPlanCard from '../../src/components/MealPlanCard';
 import AddMealModal from '../../src/components/AddMealModal';
 import NutritionSummaryCard from '../../src/components/NutritionSummaryCard';
+import MealPlanGeneratorModal from '../../src/components/MealPlanGeneratorModal';
 import { syncMealPlanToGrocery } from '../../src/modules/mealPlanning/mealPlanGroceryIntegration';
+import { GeneratedMealPlan } from '../../src/modules/mealPlanning/mealPlanGenerator';
+import {
+  generatePreparationTasksForMeal,
+  hasPreparationRequirements,
+} from '../../src/modules/preparation/preparationLogic';
+import { createPreparationTask, getTasksForMealPlan } from '../../src/modules/preparation/preparationData';
+import {
+  scheduleTaskNotification,
+  requestNotificationPermissions,
+  hasNotificationPermissions,
+} from '../../src/modules/preparation/notificationManager';
 
 export default function MealPlanScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -34,6 +46,7 @@ export default function MealPlanScreen() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [generatorModalVisible, setGeneratorModalVisible] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType>('breakfast');
   const [editingMeal, setEditingMeal] = useState<{
     id: number;
@@ -41,6 +54,17 @@ export default function MealPlanScreen() {
     servings: number;
   } | null>(null);
   const [nutritionTargets, setNutritionTargets] = useState<any>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  // Check notification permissions on mount
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const hasPerms = await hasNotificationPermissions();
+        setNotificationsEnabled(hasPerms);
+      })();
+    }, [])
+  );
 
   const loadData = async () => {
     setLoading(true);
@@ -126,6 +150,29 @@ export default function MealPlanScreen() {
           recipe_id: recipeId,
           servings,
         });
+
+        // Get updated recipe and regenerate prep tasks
+        const recipe = await getRecipeById(recipeId);
+        if (recipe && hasPreparationRequirements(recipe.name)) {
+          // Get existing tasks for this meal and delete them
+          const existingTasks = await getTasksForMealPlan(editingMeal.id);
+          for (const task of existingTasks) {
+            await require('../../src/modules/preparation/preparationData').deletePreparationTask(task.id);
+          }
+
+          // Generate new prep tasks
+          const mealPlan = { id: editingMeal.id, meal_type: selectedMealType, planned_date: dateStr, recipe_id: recipeId, servings, is_completed: 0, created_at: '' } as MealPlan;
+          const prepTasks = generatePreparationTasksForMeal(mealPlan, recipe);
+          for (const task of prepTasks) {
+            const taskId = await createPreparationTask(task);
+            
+            // Schedule notification if permissions granted
+            if (notificationsEnabled && taskId) {
+              const fullTask: PreparationTask = { ...task, id: taskId, created_at: new Date().toISOString() };
+              await scheduleTaskNotification(fullTask);
+            }
+          }
+        }
       } else {
         // Check if meal already exists for this date/type
         const existing = await getMealPlanByDateAndType(dateStr, selectedMealType);
@@ -142,6 +189,28 @@ export default function MealPlanScreen() {
                     recipe_id: recipeId,
                     servings,
                   });
+
+                  // Regenerate prep tasks for updated meal
+                  const recipe = await getRecipeById(recipeId);
+                  if (recipe && hasPreparationRequirements(recipe.name)) {
+                    const existingTasks = await getTasksForMealPlan(existing.id);
+                    for (const task of existingTasks) {
+                      await require('../../src/modules/preparation/preparationData').deletePreparationTask(task.id);
+                    }
+
+                    const mealPlan = { ...existing, recipe_id: recipeId, servings };
+                    const prepTasks = generatePreparationTasksForMeal(mealPlan, recipe);
+                    for (const task of prepTasks) {
+                      const taskId = await createPreparationTask(task);
+                      
+                      // Schedule notification if permissions granted
+                      if (notificationsEnabled && taskId) {
+                        const fullTask: PreparationTask = { ...task, id: taskId, created_at: new Date().toISOString() };
+                        await scheduleTaskNotification(fullTask);
+                      }
+                    }
+                  }
+
                   setModalVisible(false);
                   setEditingMeal(null);
                   loadData();
@@ -153,13 +222,37 @@ export default function MealPlanScreen() {
         }
 
         // Create new meal
-        await createMealPlan({
+        const newMealId = await createMealPlan({
           recipe_id: recipeId,
           meal_type: selectedMealType,
           planned_date: dateStr,
           servings,
           is_completed: 0,
         });
+
+        // Generate preparation tasks for the new meal
+        const recipe = await getRecipeById(recipeId);
+        if (recipe && hasPreparationRequirements(recipe.name)) {
+          const mealPlan: MealPlan = {
+            id: newMealId,
+            recipe_id: recipeId,
+            meal_type: selectedMealType,
+            planned_date: dateStr,
+            servings,
+            is_completed: 0,
+            created_at: new Date().toISOString(),
+          };
+          const prepTasks = generatePreparationTasksForMeal(mealPlan, recipe);
+          for (const task of prepTasks) {
+            const taskId = await createPreparationTask(task);
+            
+            // Schedule notification if permissions granted
+            if (notificationsEnabled && taskId) {
+              const fullTask: PreparationTask = { ...task, id: taskId, created_at: new Date().toISOString() };
+              await scheduleTaskNotification(fullTask);
+            }
+          }
+        }
       }
 
       setModalVisible(false);
@@ -217,6 +310,83 @@ export default function MealPlanScreen() {
       Alert.alert('Error', 'Failed to sync meal plan to grocery list');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGeneratePlan = () => {
+    setGeneratorModalVisible(true);
+  };
+
+  const handleAcceptGeneratedPlan = async (plan: GeneratedMealPlan) => {
+    try {
+      const dateStr = formatDateForDB(selectedDate);
+
+      // Create meals for each type
+      const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner'];
+      const planRecipes = [plan.breakfast, plan.lunch, plan.dinner];
+
+      for (let i = 0; i < mealTypes.length; i++) {
+        const mealType = mealTypes[i];
+        const recipe = planRecipes[i];
+
+        // Check if meal already exists
+        const existing = await getMealPlanByDateAndType(dateStr, mealType);
+        let mealPlanId: number;
+
+        if (existing) {
+          await updateMealPlan(existing.id, {
+            recipe_id: recipe.id,
+            servings: 1,
+          });
+          mealPlanId = existing.id;
+
+          // Delete old prep tasks
+          const existingTasks = await getTasksForMealPlan(existing.id);
+          for (const task of existingTasks) {
+            await require('../../src/modules/preparation/preparationData').deletePreparationTask(task.id);
+          }
+        } else {
+          mealPlanId = await createMealPlan({
+            recipe_id: recipe.id,
+            meal_type: mealType,
+            planned_date: dateStr,
+            servings: 1,
+            is_completed: 0,
+          });
+        }
+
+        // Generate preparation tasks
+        if (hasPreparationRequirements(recipe.name)) {
+          const mealPlan: MealPlan = {
+            id: mealPlanId,
+            recipe_id: recipe.id,
+            meal_type: mealType,
+            planned_date: dateStr,
+            servings: 1,
+            is_completed: 0,
+            created_at: new Date().toISOString(),
+          };
+          const prepTasks = generatePreparationTasksForMeal(mealPlan, recipe);
+          for (const task of prepTasks) {
+            const taskId = await createPreparationTask(task);
+            
+            // Schedule notification if permissions granted
+            if (notificationsEnabled && taskId) {
+              const fullTask: PreparationTask = { ...task, id: taskId, created_at: new Date().toISOString() };
+              await scheduleTaskNotification(fullTask);
+            }
+          }
+        }
+      }
+
+      const successMessage = notificationsEnabled
+        ? 'Meal plan has been created with preparation reminders!'
+        : 'Meal plan created! Enable notifications in settings to receive prep reminders.';
+      Alert.alert('Success', successMessage, [{ text: 'OK' }]);
+      loadData();
+    } catch (error) {
+      console.error('Error accepting generated plan:', error);
+      Alert.alert('Error', 'Failed to save generated meal plan');
     }
   };
 
@@ -296,6 +466,21 @@ export default function MealPlanScreen() {
           <Text style={styles.loadingText}>Loading...</Text>
         ) : (
           <>
+            {/* Generate Meal Plan Button */}
+            <TouchableOpacity
+              style={styles.generateButton}
+              onPress={handleGeneratePlan}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.generateButtonIcon}>✨</Text>
+              <View style={styles.generateButtonContent}>
+                <Text style={styles.generateButtonTitle}>Generate Meal Plan</Text>
+                <Text style={styles.generateButtonSubtitle}>
+                  Create balanced meals based on your nutrition targets
+                </Text>
+              </View>
+            </TouchableOpacity>
+
             {mealPlans.length > 0 && (
               <>
                 <TouchableOpacity
@@ -341,6 +526,14 @@ export default function MealPlanScreen() {
           setModalVisible(false);
           setEditingMeal(null);
         }}
+      />
+
+      <MealPlanGeneratorModal
+        visible={generatorModalVisible}
+        onClose={() => setGeneratorModalVisible(false)}
+        onAcceptPlan={handleAcceptGeneratedPlan}
+        recipes={recipes}
+        nutritionTarget={nutritionTargets}
       />
     </View>
   );
@@ -493,5 +686,31 @@ const styles = StyleSheet.create({
   syncButtonSubtitle: {
     fontSize: 12,
     color: '#E3F2FD',
+  },
+  generateButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    minHeight: 44,
+  },
+  generateButtonIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  generateButtonContent: {
+    flex: 1,
+  },
+  generateButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  generateButtonSubtitle: {
+    fontSize: 12,
+    color: '#E8F5E9',
   },
 });

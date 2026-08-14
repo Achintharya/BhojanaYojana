@@ -174,10 +174,54 @@ export async function seedSampleData(): Promise<void> {
       `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
        VALUES (?, ?, ?, ?)`,
       [
+        dosaResult.lastInsertRowId,
+        'kn',
+        '1. ಅಕ್ಕಿ ಮತ್ತು ಉದ್ದಿನ ಬೇಳೆಯನ್ನು 4-6 ಗಂಟೆ ನೆನೆಸಿ\n2. ಮೃದುವಾದ ಹಿಟ್ಟಾಗುವವರೆಗೆ ಅರೆಯಿರಿ\n3. ರಾತ್ರಿಯಿಡೀ ಹುಳಿಮಾಡಿ\n4. ತವೆಯನ್ನು ಕಾಯಿಸಿ ಹಿಟ್ಟು ಸುರಿಯಿರಿ\n5. ಗರಿಗರಿಯಾಗುವವರೆಗೆ ಬೇಯಿಸಿ',
+        'ಚಟ್ನಿ ಮತ್ತು ಸಾಂಬಾರ್ ಜೊತೆ ಬಡಿಸುವುದು ಉತ್ತಮ',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        dosaResult.lastInsertRowId,
+        'mr',
+        '1. तांदूळ आणि उडीद डाळ 4-6 तास भिजवा\n2. गुळगुळीत पिठाचे पीठ करा\n3. रात्रभर आंबवा\n4. तवा गरम करा आणि पीठ ओता\n5. कुरकुरीत होईपर्यंत शिजवा',
+        'चटणी आणि सांबार सोबत सर्व्ह करा',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
         dalResult.lastInsertRowId,
         'en',
         '1. Pressure cook dal with turmeric\n2. Temper with ghee, cumin, onions\n3. Add tomatoes and cook\n4. Mix with cooked dal\n5. Garnish with coriander',
         'Protein-rich and nutritious',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        dalResult.lastInsertRowId,
+        'kn',
+        '1. ಬೇಳೆಯನ್ನು ಅರಿಶಿಣದೊಂದಿಗೆ ಪ್ರೆಶರ್ ಕುಕ್ ಮಾಡಿ\n2. ತುಪ್ಪ, ಜೀರಿಗೆ, ಈರುಳ್ಳಿಯಿಂದ ಒಗ್ಗರಣೆ ಮಾಡಿ\n3. ಟೊಮೇಟೊ ಸೇರಿಸಿ ಬೇಯಿಸಿ\n4. ಬೇಯಿಸಿದ ಬೇಳೆಯೊಂದಿಗೆ ಬೆರೆಸಿ\n5. ಕೊತ್ತಂಬರಿ ಸೊಪ್ಪಿನಿಂದ ಅಲಂಕರಿಸಿ',
+        'ಪ್ರೋಟೀನ್ ಭರಿತ ಮತ್ತು ಪೌಷ್ಟಿಕ',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        dalResult.lastInsertRowId,
+        'mr',
+        '1. डाळ हळद सोबत प्रेशर कुकरमध्ये शिजवा\n2. तूप, जिरे, कांदे यांचा फोडणी घाला\n3. टोमॅटो घालून शिजवा\n4. शिजलेल्या डाळीत मिक्स करा\n5. कोथिंबीर घालून सजवा',
+        'प्रथिनेयुक्त आणि पौष्टिक',
       ]
     );
 
@@ -196,10 +240,54 @@ export async function seedSampleData(): Promise<void> {
       `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
        VALUES (?, ?, ?, ?)`,
       [
+        riceResult.lastInsertRowId,
+        'kn',
+        '1. ಅಕ್ಕಿಯನ್ನು ಚೆನ್ನಾಗಿ ತೊಳೆಯಿರಿ\n2. ನೀರು ಸೇರಿಸಿ (1:2 ಅನುಪಾತ)\n3. 2 ಸಿಟ್ಟಿಗೆಗಳಿಗೆ ಪ್ರೆಶರ್ ಕುಕ್ ಮಾಡಿ\n4. ಉಗಿ ನೈಸರ್ಗಿಕವಾಗಿ ಬಿಡುಗಡೆಯಾಗಲಿ\n5. ಪಫ್ ಮಾಡಿ ಬಡಿಸಿ',
+        'ಯಾವುದೇ ಕರಿಗೆ ಪರಿಪೂರ್ಣ ಜೊತೆಗಾರ',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        riceResult.lastInsertRowId,
+        'mr',
+        '1. तांदूळ चांगले धुवा\n2. पाणी घाला (1:2 प्रमाण)\n3. 2 शिट्ट्या येईपर्यंत प्रेशर कुकरमध्ये शिजवा\n4. वाफ नैसर्गिकरित्या सोडा\n5. फुगवून सर्व्ह करा',
+        'कोणत्याही भाजीसाठी उत्तम',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
         chapatiResult.lastInsertRowId,
         'en',
         '1. Knead flour with water\n2. Rest for 15 minutes\n3. Roll into thin circles\n4. Cook on hot tava\n5. Apply ghee and serve hot',
         'Whole wheat flatbread',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        chapatiResult.lastInsertRowId,
+        'kn',
+        '1. ಹಿಟ್ಟನ್ನು ನೀರಿನೊಂದಿಗೆ ನಯವಾಗಿ ಕಲೆಯಿರಿ\n2. 15 ನಿಮಿಷಗಳ ಕಾಲ ವಿಶ್ರಾಂತಿ ಮಾಡಿ\n3. ತೆಳುವಾದ ವೃತ್ತಗಳಾಗಿ ಉರುಳಿಸಿ\n4. ಬಿಸಿ ತವೆಯ ಮೇಲೆ ಬೇಯಿಸಿ\n5. ತುಪ್ಪ ಹಚ್ಚಿ ಬಿಸಿಬಿಸಿಯಾಗಿ ಬಡಿಸಿ',
+        'ಗೋಧಿ ಹಿಟ್ಟಿನ ರೊಟ್ಟಿ',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        chapatiResult.lastInsertRowId,
+        'mr',
+        '1. पीठ पाण्यात मळून घ्या\n2. 15 मिनिटे विश्रांती द्या\n3. पातळ गोल वाढून घ्या\n4. गरम तव्यावर भाजून घ्या\n5. तूप लावून गरमागरम सर्व्ह करा',
+        'संपूर्ण गव्हाची पोळी',
       ]
     );
 
@@ -218,6 +306,28 @@ export async function seedSampleData(): Promise<void> {
       `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
        VALUES (?, ?, ?, ?)`,
       [
+        alooResult.lastInsertRowId,
+        'kn',
+        '1. ಆಲೂಗಡ್ಡೆಯನ್ನು ತುಂಡುಗಳಾಗಿ ಕತ್ತರಿಸಿ\n2. ಎಣ್ಣೆ ಕಾಯಿಸಿ, ಜೀರಿಗೆ ಸೇರಿಸಿ\n3. ಈರುಳ್ಳಿ ಮತ್ತು ಟೊಮೇಟೊವನ್ನು ಬೇಯಿಸಿ\n4. ಆಲೂಗಡ್ಡೆ ಮತ್ತು ಮಸಾಲೆ ಸೇರಿಸಿ\n5. ಮೃದುವಾಗುವವರೆಗೆ ಬೇಯಿಸಿ',
+        'ರುಚಿಕರವಾದ ಆಲೂ ಪಲ್ಯ',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        alooResult.lastInsertRowId,
+        'mr',
+        '1. बटाटे चौकोन कापा\n2. तेल गरम करा, जिरे घाला\n3. कांदे आणि टोमॅटो परतून घ्या\n4. बटाटे आणि मसाले घाला\n5. मऊ होईपर्यंत शिजवा',
+        'चविष्ट बटाटा भाजी',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
         upmaResult.lastInsertRowId,
         'en',
         '1. Roast semolina\n2. Heat oil, add mustard seeds\n3. Add vegetables\n4. Add water and roasted semolina\n5. Cook until fluffy',
@@ -225,10 +335,33 @@ export async function seedSampleData(): Promise<void> {
       ]
     );
 
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        upmaResult.lastInsertRowId,
+        'kn',
+        '1. ರವೆಯನ್ನು ಹುರಿಯಿರಿ\n2. ಎಣ್ಣೆ ಕಾಯಿಸಿ, ಸಾಸಿವೆ ಸೇರಿಸಿ\n3. ತರಕಾರಿಗಳನ್ನು ಸೇರಿಸಿ\n4. ನೀರು ಮತ್ತು ಹುರಿದ ರವೆ ಸೇರಿಸಿ\n5. ಪಫ್ಫಿ ಆಗುವವರೆಗೆ ಬೇಯಿಸಿ',
+        'ತ್ವರಿತ ಮತ್ತು ಆರೋಗ್ಯಕರ ಉಪಹಾರ',
+      ]
+    );
+
+    await db.runAsync(
+      `INSERT INTO recipe_content (recipe_id, language, instructions, notes)
+       VALUES (?, ?, ?, ?)`,
+      [
+        upmaResult.lastInsertRowId,
+        'mr',
+        '1. रवा भाजून घ्या\n2. तेल गरम करा, मोहरी घाला\n3. भाज्या घाला\n4. पाणी आणि भाजलेला रवा घाला\n5. फुगेपर्यंत शिजवा',
+        'जलद आणि आरोग्यदायी नाश्ता',
+      ]
+    );
+
     console.log('Sample data seeded successfully!');
     console.log('- 10 pantry items');
     console.log('- 6 recipes with nutrition data');
     console.log('- Recipe ingredients linked to pantry');
+    console.log('- Multilingual content (English, Kannada, Marathi)');
     console.log('- Default nutrition targets set');
   } catch (error) {
     console.error('Error seeding sample data:', error);

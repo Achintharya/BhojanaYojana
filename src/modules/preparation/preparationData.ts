@@ -65,6 +65,23 @@ export async function createPreparationTask(task: NewPreparationTask): Promise<n
 }
 
 /**
+ * Update preparation task
+ */
+export async function updatePreparationTask(
+  id: number,
+  updates: Partial<Omit<PreparationTask, 'id' | 'created_at'>>
+): Promise<void> {
+  const db = getDatabase();
+  const fields = Object.keys(updates);
+  const values = Object.values(updates);
+  
+  if (fields.length === 0) return;
+  
+  const setClause = fields.map((field) => `${field} = ?`).join(', ');
+  await db.runAsync(`UPDATE preparation_tasks SET ${setClause} WHERE id = ?`, [...values, id]);
+}
+
+/**
  * Mark task as completed
  */
 export async function markTaskCompleted(id: number): Promise<void> {
