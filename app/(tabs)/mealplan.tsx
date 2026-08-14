@@ -26,6 +26,7 @@ import {
 import MealPlanCard from '../../src/components/MealPlanCard';
 import AddMealModal from '../../src/components/AddMealModal';
 import NutritionSummaryCard from '../../src/components/NutritionSummaryCard';
+import { syncMealPlanToGrocery } from '../../src/modules/mealPlanning/mealPlanGroceryIntegration';
 
 export default function MealPlanScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -189,6 +190,36 @@ export default function MealPlanScreen() {
     ]);
   };
 
+  const handleSyncToGrocery = async () => {
+    try {
+      setLoading(true);
+      const result = await syncMealPlanToGrocery(7);
+      
+      if (result.success) {
+        if (result.itemsAdded > 0) {
+          const ingredientList = result.missingIngredients
+            .map((item) => `• ${item.name}: ${item.quantity.toFixed(1)} ${item.unit}`)
+            .join('\n');
+          
+          Alert.alert(
+            'Grocery List Updated',
+            `${result.message}\n\nAdded items:\n${ingredientList}`,
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert('Grocery List', result.message, [{ text: 'OK' }]);
+        }
+      } else {
+        Alert.alert('Error', result.message, [{ text: 'OK' }]);
+      }
+    } catch (error) {
+      console.error('Error syncing to grocery:', error);
+      Alert.alert('Error', 'Failed to sync meal plan to grocery list');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getMealForType = (type: MealType) => {
     return mealPlans.find((plan) => plan.meal_type === type);
   };
@@ -265,7 +296,22 @@ export default function MealPlanScreen() {
           <Text style={styles.loadingText}>Loading...</Text>
         ) : (
           <>
-            {mealPlans.length > 0 && <NutritionSummaryCard comparison={comparison} />}
+            {mealPlans.length > 0 && (
+              <>
+                <TouchableOpacity
+                  style={styles.syncButton}
+                  onPress={handleSyncToGrocery}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.syncButtonIcon}>🛒</Text>
+                  <View style={styles.syncButtonContent}>
+                    <Text style={styles.syncButtonTitle}>Sync to Grocery List</Text>
+                    <Text style={styles.syncButtonSubtitle}>Add missing ingredients for next 7 days</Text>
+                  </View>
+                </TouchableOpacity>
+                <NutritionSummaryCard comparison={comparison} />
+              </>
+            )}
 
             {renderMealSection('breakfast', 'Breakfast', '🌅')}
             {renderMealSection('lunch', 'Lunch', '☀️')}
@@ -421,5 +467,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 32,
     lineHeight: 20,
+  },
+  syncButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    minHeight: 44,
+  },
+  syncButtonIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  syncButtonContent: {
+    flex: 1,
+  },
+  syncButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  syncButtonSubtitle: {
+    fontSize: 12,
+    color: '#E3F2FD',
   },
 });
