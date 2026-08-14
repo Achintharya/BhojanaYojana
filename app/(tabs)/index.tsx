@@ -173,41 +173,49 @@ export default function HomeScreen() {
         <SectionHeader title="Quick Actions" />
         <View style={styles.actionsRow}>
           <ActionCard
-            icon="📅"
+            iconName="calendar"
             title="Plan Meals"
             onPress={() => router.push('/mealplan')}
             backgroundColor={colors.accent}
             textColor={colors.textOnPrimary}
+            iconColor={colors.textOnPrimary}
           />
           <View style={styles.actionSpacer} />
           <ActionCard
-            icon="📖"
+            iconName="book"
             title="Browse Recipes"
             onPress={() => router.push('/recipes')}
             backgroundColor={colors.secondary}
+            textColor={colors.textPrimary}
+            iconColor={colors.textPrimary}
           />
         </View>
         <View style={styles.actionsRow}>
           <ActionCard
-            icon="🛒"
+            iconName="cart"
             title="Grocery List"
             onPress={() => router.push('/grocery')}
             backgroundColor={colors.surfaceLight}
+            textColor={colors.textPrimary}
+            iconColor={colors.textPrimary}
           />
           <View style={styles.actionSpacer} />
           <ActionCard
-            icon="🏺"
+            iconName="archive"
             title="Pantry"
             onPress={() => router.push('/pantry')}
             backgroundColor={colors.primary}
             textColor={colors.secondary}
+            iconColor={colors.secondary}
           />
           <View style={styles.actionSpacer} />
           <ActionCard
-            icon="📊"
+            iconName="pie-chart"
             title="Nutrition"
             onPress={() => router.push('/nutrition')}
             backgroundColor={colors.secondary}
+            textColor={colors.textPrimary}
+            iconColor={colors.textPrimary}
           />
         </View>
       </View>
