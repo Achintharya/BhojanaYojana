@@ -54,5 +54,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.screenPadding,
+    paddingBottom: 120, // Extra padding for floating bottom navbar
   },
 });

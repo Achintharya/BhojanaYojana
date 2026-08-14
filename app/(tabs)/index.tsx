@@ -86,12 +86,6 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer>
-      {/* Greeting */}
-      <View style={styles.greeting}>
-        <Text style={styles.greetingText}>Namaste! 👋</Text>
-        <Text style={styles.subtitle}>Let's plan delicious meals for your family</Text>
-      </View>
-
       {/* Web Notification Banner */}
       {isWeb && (
         <TouchableOpacity style={styles.webNotificationBanner} activeOpacity={0.9}>
