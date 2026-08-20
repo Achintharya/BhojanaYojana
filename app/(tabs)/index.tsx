@@ -183,7 +183,7 @@ export default function HomeScreen() {
           <View style={styles.actionSpacer} />
           <ActionCard
             iconName="book"
-            title="Browse Recipes"
+            title="Recipes"
             onPress={() => router.push('/recipes')}
             backgroundColor="#F5E6D3"
             textColor="#3D2817"

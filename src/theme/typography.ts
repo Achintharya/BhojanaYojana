@@ -6,15 +6,8 @@
 import { Platform } from 'react-native';
 
 export const typography = {
-  // Font families
+  // Font families (system defaults)
   fontFamily: Platform.select({
-    ios: 'Puffberry-Demo',
-    android: 'Puffberry-Demo',
-    default: 'Puffberry-Demo',
-  }),
-  
-  // Fallback font families
-  fallbackFontFamily: Platform.select({
     ios: 'System',
     android: 'Roboto',
     default: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
